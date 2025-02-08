@@ -1,25 +1,78 @@
 package main
 
 import (
-  "fmt"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"sync"
 )
 
-//TIP To run your code, right-click the code and select <b>Run</b>. Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.
-
-func main() {
-  //TIP Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined or highlighted text
-  // to see how GoLand suggests fixing it.
-  s := "gopher"
-  fmt.Println("Hello and welcome, %s!", s)
-
-  for i := 1; i <= 5; i++ {
-	//TIP You can try debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-	// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>. To start your debugging session, 
-	// right-click your code in the editor and select the <b>Debug</b> option. 
-	fmt.Println("i =", 100/i)
-  }
+// ServiceInstance Network Function Service Instance
+type ServiceInstance struct {
+	NFType     string `json:"nfType"`     // Network Function Type (eg. AMF, SMF,...)
+	InstanceID string `json:"instanceId"` // Service Instance Identity
+	IPAddress  string `json:"IPAddress"`  // Service IP Address
+	Port       int    `json:"port"`       // Service Port
+	Priority   int    `json:"priority"`   // Priority
+	Weight     int    `json:"weight"`     // Weight
 }
 
-//TIP See GoLand help at <a href="https://www.jetbrains.com/help/go/">jetbrains.com/help/go/</a>.
-// Also, you can try interactive lessons for GoLand by selecting 'Help | Learn IDE Features' from the main menu.
+// NRF Network Repository Function
+type NRF struct {
+	serviceRegistry map[string][]ServiceInstance
+	mutex           sync.RWMutex
+}
+
+func NewNRF() *NRF {
+	return &NRF{
+		serviceRegistry: make(map[string][]ServiceInstance),
+	}
+}
+
+func (nrf *NRF) Register(ctx *gin.Context) {
+	var instance ServiceInstance
+	if err := ctx.ShouldBind(&instance); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// Mutex Lock Resource
+	nrf.mutex.Lock()
+	defer nrf.mutex.Unlock()
+	// Append New NF Service Instance to Register Map
+	nrf.serviceRegistry[instance.NFType] = append(nrf.serviceRegistry[instance.NFType], instance)
+	// Return Successful Response
+	ctx.JSON(http.StatusCreated, gin.H{"status": "Registered", "instance": instance})
+}
+
+func (nrf *NRF) Discovery(ctx *gin.Context) {
+	nfType := ctx.Query("nfType")
+	if nfType == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'nfType' is required"})
+		return
+	}
+	// Mutex Lock Resource
+	nrf.mutex.Lock()
+	defer nrf.mutex.Unlock()
+	// Query NF Service Instance
+	instances, exists := nrf.serviceRegistry[nfType]
+	if !exists || len(instances) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "service not found"})
+		return
+	}
+	// Return Successful Response
+	ctx.JSON(http.StatusOK, gin.H{"nfType": nfType, "instances": instances})
+}
+
+func main() {
+	router := gin.Default()
+	nrf := NewNRF()
+	fmt.Println("The Network Repository Function (NRF) Service.")
+	// Register API Route
+	api := router.Group("/nrf/v1")
+	{
+		api.POST("register", nrf.Register)
+		api.POST("discovery", nrf.Discovery)
+	}
+	// Start NRF Service
+	router.Run(":8080")
+}
