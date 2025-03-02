@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	. "nrf/data"
@@ -14,6 +15,8 @@ func HandleRegister(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	nfInstanceId := context.Param("nfInstanceID")
+	fmt.Println("nfInstanceId:", nfInstanceId)
 	// create instance from request body
 	instance := NFInstance{
 		NFInstanceId: request.NFInstanceId,
