@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	. "nrf/app"
 	"runtime"
 )
 
@@ -17,5 +18,9 @@ func init() {
 }
 
 func main() {
-	fmt.Println("Hello World")
+	fmt.Println("The 5G System Network Function Repository Services.")
+	NRFService = New()
+	NRFService.Init()
+	NRFService.Start()
+	fmt.Println("The NRF is running...")
 }

@@ -27,6 +27,12 @@ const (
 const maxBufPoolSize = 16
 
 var levelPrefix = [LevelDebug + 1]string{"CRITICAL", "ERROR", "WARNING", "TRACE", "INFO", "DEBUG"}
+var L *Logger
+
+func InitLog() {
+	w, _ := NewMultipleFileWriter("./log/nrf.log", 1*1024*1024, 5)
+	L = NewDefaultLogger(w)
+}
 
 type Atom int32
 
