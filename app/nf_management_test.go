@@ -10,6 +10,7 @@ import (
 
 func TestHandleRegister(t *testing.T) {
 	NRFService = New()
+	NRFService.Init()
 	gin.SetMode(gin.TestMode)
 	recorder := httptest.NewRecorder()
 	context, _ := gin.CreateTestContext(recorder)
