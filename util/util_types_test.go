@@ -2,6 +2,8 @@ package util
 
 import (
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -21,6 +23,17 @@ func BenchmarkCheckNFInstanceId(b *testing.B) {
 			b.Fatal("Error Check NFInstanceId:", err)
 		}
 	}
+}
+
+func TestMarshalNFInstanceId(t *testing.T) {
+	nfInstanceId := uuid.New().String()
+	marshalInstanceId := strings.ToLower(nfInstanceId)
+	nfInstanceId = strings.ToUpper(nfInstanceId)
+	err := MarshalNFInstanceId(&nfInstanceId)
+	if err != nil {
+		t.Fatal("Error Marshal NFInstanceId:", err)
+	}
+	assert.Equal(t, nfInstanceId, marshalInstanceId)
 }
 
 func TestCheckNFType(t *testing.T) {

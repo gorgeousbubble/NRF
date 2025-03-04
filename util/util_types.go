@@ -3,17 +3,25 @@ package util
 import (
 	"errors"
 	"github.com/google/uuid"
+	"strings"
 )
 
 func CheckNFInstanceId(nfInstanceId string) (b bool, err error) {
 	b, err = true, nil
-	// parse UUID
+	// parse NFInstanceId
 	_, err = uuid.Parse(nfInstanceId)
 	if err != nil {
 		b = false
 		return b, err
 	}
 	return b, err
+}
+
+func MarshalNFInstanceId(nfInstanceId *string) (err error) {
+	err = nil
+	// marshal NFInstanceId
+	*nfInstanceId = strings.ToLower(*nfInstanceId)
+	return err
 }
 
 func CheckNFType(nfType string) (b bool, err error) {

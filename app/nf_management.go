@@ -22,11 +22,18 @@ func HandleRegister(context *gin.Context) {
 		return
 	}
 	L.Debug("Register request body bind json success.")
-	// check request body mandatory IEs
-	b, err := checkRegisterMandatoryIEs(&request)
+	// check request body IEs
+	b, err := checkRegisterIEs(&request)
 	if b == false {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "register request lack of mandatory IEs."})
-		L.Error("Register request lack of mandatory IEs:", err)
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		L.Error("Register request check failed:", err)
+		return
+	}
+	// marshal request body IEs
+	err = marshalRegisterIEs(&request)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		L.Error("Register request body marshal failed:", err)
 		return
 	}
 	// extract nfInstanceId from request uri
@@ -45,12 +52,13 @@ func HandleRegister(context *gin.Context) {
 		NRFService.instances[request.NFType] = append(NRFService.instances[request.NFType], instance)
 	}()
 	// return success response
-	context.JSON(http.StatusCreated, instance)
+	context.JSON(http.StatusCreated, request)
 	return
 }
 
-func checkRegisterMandatoryIEs(request *NFProfile) (b bool, err error) {
+func checkRegisterIEs(request *NFProfile) (b bool, err error) {
 	b, err = true, nil
+	// check mandatory IEs...
 	// check NFInstanceId
 	L.Debug("Start CheckNFInstanceId:", request.NFInstanceId)
 	b, err = CheckNFInstanceId(request.NFInstanceId)
@@ -61,7 +69,7 @@ func checkRegisterMandatoryIEs(request *NFProfile) (b bool, err error) {
 	}
 	L.Debug("CheckNFInstanceId success.")
 	// check NFType
-	L.Debug("Start checkNFType:", request.NFType)
+	L.Debug("Start CheckNFType:", request.NFType)
 	b, err = CheckNFType(request.NFType)
 	if err != nil {
 		b = false
@@ -70,7 +78,7 @@ func checkRegisterMandatoryIEs(request *NFProfile) (b bool, err error) {
 	}
 	L.Debug("CheckNFType success.")
 	// check NFStatus
-	L.Debug("Start checkNFStatus:", request.NFStatus)
+	L.Debug("Start CheckNFStatus:", request.NFStatus)
 	b, err = CheckNFStatus(request.NFStatus)
 	if err != nil {
 		b = false
@@ -79,4 +87,16 @@ func checkRegisterMandatoryIEs(request *NFProfile) (b bool, err error) {
 	}
 	L.Debug("CheckNFStatus success.")
 	return b, err
+}
+
+func marshalRegisterIEs(request *NFProfile) (err error) {
+	err = nil
+	// marshal NFInstanceId
+	L.Debug("Start MarshalNFInstanceId:", request.NFStatus)
+	err = MarshalNFInstanceId(&request.NFInstanceId)
+	if err != nil {
+		L.Error("MarshalNFInstanceId failed:", err)
+	}
+	L.Debug("MarshalNFType success:", request.NFType)
+	return err
 }
