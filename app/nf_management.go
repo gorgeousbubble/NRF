@@ -52,6 +52,8 @@ func HandleRegister(context *gin.Context) {
 		NRFService.instances[request.NFType] = append(NRFService.instances[request.NFType], instance)
 	}()
 	// return success response
+	context.Header("Content-Type", "application/json")
+	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+request.NFInstanceId)
 	context.JSON(http.StatusCreated, request)
 	return
 }
