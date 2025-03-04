@@ -36,6 +36,19 @@ func TestMarshalNFInstanceId(t *testing.T) {
 	assert.Equal(t, nfInstanceId, marshalInstanceId)
 }
 
+func BenchmarkMarshalNFInstanceId(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		nfInstanceId := uuid.New().String()
+		marshalInstanceId := strings.ToLower(nfInstanceId)
+		nfInstanceId = strings.ToUpper(nfInstanceId)
+		err := MarshalNFInstanceId(&nfInstanceId)
+		if err != nil {
+			b.Fatal("Error Marshal NFInstanceId:", err)
+		}
+		assert.Equal(b, nfInstanceId, marshalInstanceId)
+	}
+}
+
 func TestCheckNFType(t *testing.T) {
 	nfType := "AMF"
 	b, err := CheckNFType(nfType)
