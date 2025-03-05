@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	. "nrf/app"
+	"os"
 	"runtime"
 )
 
@@ -20,7 +21,11 @@ func init() {
 func main() {
 	fmt.Println("The 5G System Network Function Repository Services.")
 	NRFService = New()
-	NRFService.Init()
+	err := NRFService.Init()
+	if err != nil {
+		fmt.Println("The NRF initialization failed:", err.Error())
+		os.Exit(1)
+	}
 	NRFService.Start()
 	fmt.Println("The NRF is running...")
 }

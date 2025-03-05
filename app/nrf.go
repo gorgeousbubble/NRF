@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
+	. "nrf/conf"
 	. "nrf/logs"
 	"sync"
 )
@@ -25,9 +26,22 @@ func New() *NRF {
 	}
 }
 
-func (nrf *NRF) Init() {
-	InitLog()
-	L.Info("Initialize NRF Successfully.")
+func (nrf *NRF) Init() (err error) {
+	err = InitLog()
+	if err != nil {
+		L.Error("Initialize NRF Logger failed:", err.Error())
+		return err
+	}
+	L.Info("Initialize NRF Logger Success.")
+	L.Info("Loading NRF Configuration...")
+	err = LoadConf()
+	if err != nil {
+		L.Error("Loading NRF Configuration failed:", err.Error())
+		return err
+	}
+	L.Info("Loading NRF Configuration Success.")
+	L.Info("Initialize NRF Success.")
+	return err
 }
 
 func (nrf *NRF) Start() {
