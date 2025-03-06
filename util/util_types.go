@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"github.com/google/uuid"
+	. "nrf/conf"
 	"strings"
 )
 
@@ -53,4 +54,26 @@ func CheckNFStatus(nfStatus string) (b bool, err error) {
 		return b, err
 	}
 	return b, err
+}
+
+func CheckHeartBeatTimer(heartBeatTimer int) (b bool, err error) {
+	b, err = true, nil
+	// check HeartBeatTimer
+	if heartBeatTimer < 1 {
+		b, err = false, errors.New("HeartBeatTimer should be greater than 1")
+		return b, err
+	} else if heartBeatTimer > 3600 {
+		b, err = false, errors.New("HeartBeatTimer should be less than 3600")
+		return b, err
+	}
+	return b, err
+}
+
+func MarshalHeartBeatTimer(heartBeatTimer *int) (err error) {
+	err = nil
+	// marshal HeartBeatTimer
+	if !NRFConfigure.AcceptNFHeartBeatTimer {
+		*heartBeatTimer = NRFConfigure.DefaultHeartBeatTimer
+	}
+	return err
 }

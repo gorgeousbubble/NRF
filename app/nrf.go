@@ -15,9 +15,10 @@ type NRF struct {
 }
 
 type NFInstance struct {
-	NFInstanceId string `json:"nfInstanceId" yaml:"nfInstanceId"`
-	NFType       string `json:"nfType" yaml:"nfType"`
-	NFStatus     string `json:"nfStatus" yaml:"nfStatus"`
+	NFInstanceId   string `json:"nfInstanceId" yaml:"nfInstanceId"`
+	NFType         string `json:"nfType" yaml:"nfType"`
+	NFStatus       string `json:"nfStatus" yaml:"nfStatus"`
+	HeartBeatTimer int    `json:"heartBeatTimer" yaml:"heartBeatTimer"`
 }
 
 func New() *NRF {

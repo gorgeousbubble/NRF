@@ -25,7 +25,7 @@ func HandleRegister(context *gin.Context) {
 	// check request body IEs
 	b, err := checkRegisterIEs(&request)
 	if b == false {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Check register failed"})
 		L.Error("Register request check failed:", err)
 		return
 	}
@@ -41,9 +41,10 @@ func HandleRegister(context *gin.Context) {
 	fmt.Println("nfInstanceId:", nfInstanceId)
 	// create instance from request body
 	instance := NFInstance{
-		NFInstanceId: request.NFInstanceId,
-		NFType:       request.NFType,
-		NFStatus:     request.NFStatus,
+		NFInstanceId:   request.NFInstanceId,
+		NFType:         request.NFType,
+		NFStatus:       request.NFStatus,
+		HeartBeatTimer: request.HeartBeatTimer,
 	}
 	// store instance in NRF Service database
 	func() {
@@ -88,6 +89,18 @@ func checkRegisterIEs(request *NFProfile) (b bool, err error) {
 		return b, err
 	}
 	L.Debug("CheckNFStatus success.")
+	// check conditional IEs...
+	// check HeartBeatTimer
+	L.Debug("Start CheckHeartBeatTimer:", request.HeartBeatTimer)
+	if request.HeartBeatTimer != 0 {
+		b, err = CheckHeartBeatTimer(request.HeartBeatTimer)
+		if err != nil {
+			b = false
+			L.Error("CheckHeartBeatTimer failed:", err)
+			return b, err
+		}
+	}
+	L.Debug("CheckHeartBeatTimer success.")
 	return b, err
 }
 
@@ -100,5 +113,12 @@ func marshalRegisterIEs(request *NFProfile) (err error) {
 		L.Error("MarshalNFInstanceId failed:", err)
 	}
 	L.Debug("MarshalNFType success:", request.NFType)
+	// marshal HeartBeatTimer
+	L.Debug("Start MarshalHeartBeatTimer:", request.HeartBeatTimer)
+	err = MarshalHeartBeatTimer(&request.HeartBeatTimer)
+	if err != nil {
+		L.Error("MarshalHeartBeatTimer failed:", err)
+	}
+	L.Debug("MarshalHeartBeatTimer success.")
 	return err
 }
