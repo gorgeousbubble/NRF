@@ -84,3 +84,21 @@ func BenchmarkCheckNFStatus(b *testing.B) {
 		}
 	}
 }
+
+func TestCheckHeartBeatTimer(t *testing.T) {
+	heartBeatTimer := 60
+	b, err := CheckHeartBeatTimer(heartBeatTimer)
+	if b != true || err != nil {
+		t.Fatal("Error Check HeartBeatTimer:", err)
+	}
+}
+
+func BenchmarkCheckHeartBeatTimer(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		heartBeatTimer := 60
+		r, err := CheckHeartBeatTimer(heartBeatTimer)
+		if r != true || err != nil {
+			b.Fatal("Error Check HeartBeatTimer:", err)
+		}
+	}
+}
