@@ -18,9 +18,9 @@ func CheckNFInstanceId(nfInstanceId string) (b bool, err error) {
 	return b, err
 }
 
-func MarshalNFInstanceId(nfInstanceId *string) (err error) {
+func HandleNFInstanceId(nfInstanceId *string) (err error) {
 	err = nil
-	// marshal NFInstanceId
+	// handle NFInstanceId
 	*nfInstanceId = strings.ToLower(*nfInstanceId)
 	return err
 }
@@ -69,9 +69,9 @@ func CheckHeartBeatTimer(heartBeatTimer int) (b bool, err error) {
 	return b, err
 }
 
-func MarshalHeartBeatTimer(heartBeatTimer *int) (err error) {
+func HandleHeartBeatTimer(heartBeatTimer *int) (err error) {
 	err = nil
-	// marshal HeartBeatTimer
+	// handle HeartBeatTimer
 	if !NRFConfigure.AcceptNFHeartBeatTimer {
 		*heartBeatTimer = NRFConfigure.DefaultHeartBeatTimer
 	}

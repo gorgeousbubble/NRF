@@ -25,27 +25,27 @@ func BenchmarkCheckNFInstanceId(b *testing.B) {
 	}
 }
 
-func TestMarshalNFInstanceId(t *testing.T) {
+func TestHandleNFInstanceId(t *testing.T) {
 	nfInstanceId := uuid.New().String()
-	marshalInstanceId := strings.ToLower(nfInstanceId)
+	normalizeInstanceId := strings.ToLower(nfInstanceId)
 	nfInstanceId = strings.ToUpper(nfInstanceId)
-	err := MarshalNFInstanceId(&nfInstanceId)
+	err := HandleNFInstanceId(&nfInstanceId)
 	if err != nil {
-		t.Fatal("Error Marshal NFInstanceId:", err)
+		t.Fatal("Error Handle NFInstanceId:", err)
 	}
-	assert.Equal(t, nfInstanceId, marshalInstanceId)
+	assert.Equal(t, nfInstanceId, normalizeInstanceId)
 }
 
 func BenchmarkMarshalNFInstanceId(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		nfInstanceId := uuid.New().String()
-		marshalInstanceId := strings.ToLower(nfInstanceId)
+		normalizeInstanceId := strings.ToLower(nfInstanceId)
 		nfInstanceId = strings.ToUpper(nfInstanceId)
-		err := MarshalNFInstanceId(&nfInstanceId)
+		err := HandleNFInstanceId(&nfInstanceId)
 		if err != nil {
-			b.Fatal("Error Marshal NFInstanceId:", err)
+			b.Fatal("Error Handle NFInstanceId:", err)
 		}
-		assert.Equal(b, nfInstanceId, marshalInstanceId)
+		assert.Equal(b, nfInstanceId, normalizeInstanceId)
 	}
 }
 

@@ -17,7 +17,9 @@ func HandleRegister(context *gin.Context) {
 	L.Debug("Start bind Register request body to json:", context.Request.Body)
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		registrationError := handleRegisterResponseBadRequest(err)
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, registrationError)
 		L.Error("Register request body bind json failed:", err)
 		return
 	}
@@ -25,15 +27,19 @@ func HandleRegister(context *gin.Context) {
 	// check request body IEs
 	b, err := checkRegisterIEs(&request)
 	if b == false {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "Check register failed"})
+		registrationError := handleRegisterResponseBadRequest(err)
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, registrationError)
 		L.Error("Register request check failed:", err)
 		return
 	}
-	// marshal request body IEs
-	err = marshalRegisterIEs(&request)
+	// handle request body IEs
+	err = handleRegisterIEs(&request)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		L.Error("Register request body marshal failed:", err)
+		problemDetails := handleRegisterResponseInternalServerError(err)
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusInternalServerError, problemDetails)
+		L.Error("Register request body handle failed:", err)
 		return
 	}
 	// extract nfInstanceId from request uri
@@ -53,10 +59,33 @@ func HandleRegister(context *gin.Context) {
 		NRFService.instances[request.NFType] = append(NRFService.instances[request.NFType], instance)
 	}()
 	// return success response
+	response := handleRegisterResponseCreated(request)
 	context.Header("Content-Type", "application/json")
 	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+request.NFInstanceId)
-	context.JSON(http.StatusCreated, request)
+	context.JSON(http.StatusCreated, response)
 	return
+}
+
+func handleRegisterResponseCreated(request NFProfile) (response NFProfile) {
+	// handle Register Response Created (201)
+	response = request
+	return response
+}
+
+func handleRegisterResponseBadRequest(err error) (registrationError NFProfileRegistrationError) {
+	// handle Register Response Bad Request (400)
+	registrationError.ProblemDetails.Title = "Bad Request"
+	registrationError.ProblemDetails.Status = http.StatusBadRequest
+	registrationError.ProblemDetails.Detail = err.Error()
+	return registrationError
+}
+
+func handleRegisterResponseInternalServerError(err error) (problemDetails ProblemDetails) {
+	// handle Register Response Internal Server Error (500)
+	problemDetails.Title = "Internal Server Error"
+	problemDetails.Status = http.StatusInternalServerError
+	problemDetails.Detail = err.Error()
+	return problemDetails
 }
 
 func checkRegisterIEs(request *NFProfile) (b bool, err error) {
@@ -104,21 +133,21 @@ func checkRegisterIEs(request *NFProfile) (b bool, err error) {
 	return b, err
 }
 
-func marshalRegisterIEs(request *NFProfile) (err error) {
+func handleRegisterIEs(request *NFProfile) (err error) {
 	err = nil
-	// marshal NFInstanceId
-	L.Debug("Start MarshalNFInstanceId:", request.NFStatus)
-	err = MarshalNFInstanceId(&request.NFInstanceId)
+	// handle NFInstanceId
+	L.Debug("Start HandleNFInstanceId:", request.NFStatus)
+	err = HandleNFInstanceId(&request.NFInstanceId)
 	if err != nil {
-		L.Error("MarshalNFInstanceId failed:", err)
+		L.Error("HandleNFInstanceId failed:", err)
 	}
-	L.Debug("MarshalNFType success:", request.NFType)
-	// marshal HeartBeatTimer
-	L.Debug("Start MarshalHeartBeatTimer:", request.HeartBeatTimer)
-	err = MarshalHeartBeatTimer(&request.HeartBeatTimer)
+	L.Debug("HandleNFInstanceId success:", request.NFType)
+	// handle HeartBeatTimer
+	L.Debug("Start HandleHeartBeatTimer:", request.HeartBeatTimer)
+	err = HandleHeartBeatTimer(&request.HeartBeatTimer)
 	if err != nil {
-		L.Error("MarshalHeartBeatTimer failed:", err)
+		L.Error("HandleHeartBeatTimer failed:", err)
 	}
-	L.Debug("MarshalHeartBeatTimer success.")
+	L.Debug("HandleHeartBeatTimer success.")
 	return err
 }

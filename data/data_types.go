@@ -7,3 +7,21 @@ type NFProfile struct {
 	NFInstanceName string `json:"nfInstanceName" yaml:"nfInstanceName"`
 	HeartBeatTimer int    `json:"heartBeatTimer" yaml:"heartBeatTimer"`
 }
+
+type NFProfileRegistrationError struct {
+	ProblemDetails   ProblemDetails   `json:"problemDetails" yaml:"problemDetails"`
+	SharedDataIdList SharedDataIdList `json:"sharedDataIdList" yaml:"sharedDataIdList"`
+}
+
+type ProblemDetails struct {
+	Type     string `json:"type" yaml:"type"`
+	Title    string `json:"title" yaml:"title"`
+	Status   int    `json:"status" yaml:"status"`
+	Detail   string `json:"detail" yaml:"detail"`
+	Instance string `json:"instance" yaml:"instance"`
+	Cause    string `json:"cause" yaml:"cause"`
+}
+
+type SharedDataIdList struct {
+	SharedDataIds []string `json:"sharedDataIds" yaml:"sharedDataIds"`
+}
