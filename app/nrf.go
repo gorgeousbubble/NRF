@@ -50,6 +50,8 @@ func (nrf *NRF) Start() {
 	// middleware handle functions
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+	router.Use(ContentEncodingMiddleware())
+	router.Use(AcceptEncodingMiddleware())
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{

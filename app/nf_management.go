@@ -13,7 +13,7 @@ func HandleRegister(context *gin.Context) {
 	var request NFProfile
 	// record context in logs
 	L.Info("Register request:", context.Request)
-	// request body bind json
+	// check request body bind json
 	L.Debug("Start bind Register request body to json:", context.Request.Body)
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
