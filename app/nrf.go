@@ -11,7 +11,7 @@ var NRFService *NRF
 
 type NRF struct {
 	instances map[string][]NFInstance
-	mutex     sync.Mutex
+	mutex     sync.RWMutex
 }
 
 type NFInstance struct {
@@ -55,7 +55,8 @@ func (nrf *NRF) Start() {
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{
-		nfManagement.PUT("nf-instances/:nfInstanceID", HandleRegister)
+		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegister)
+		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
 	}
 	// start NRF services
 	err := router.Run(":8080")

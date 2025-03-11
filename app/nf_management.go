@@ -1,36 +1,42 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	. "nrf/data"
 	. "nrf/logs"
-	. "nrf/util"
+	"strings"
 )
 
-func HandleRegister(context *gin.Context) {
+type RetrieveRequest struct {
+	RequesterFeatures []string `form:"requester-features" binding:"omitempty,dive,oneof=ipv4 ipv6 tls http2 service-auth"`
+	TargetNFType      string   `form:"target-nf-type"`
+}
+
+func HandleNFRegister(context *gin.Context) {
 	var request NFProfile
 	// record context in logs
-	L.Info("Register request:", context.Request)
+	L.Info("NFRegister request:", context.Request)
 	// check request body bind json
-	L.Debug("Start bind Register request body to json:", context.Request.Body)
+	L.Debug("Start bind NFRegister request body to json:", context.Request.Body)
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
 		registrationError := handleRegisterResponseBadRequest(err)
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, registrationError)
-		L.Error("Register request body bind json failed:", err)
+		L.Error("NFRegister request body bind json failed:", err)
 		return
 	}
-	L.Debug("Register request body bind json success.")
+	L.Debug("NFRegister request body bind json success.")
 	// check request body IEs
 	b, err := checkRegisterIEs(&request)
 	if b == false {
 		registrationError := handleRegisterResponseBadRequest(err)
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, registrationError)
-		L.Error("Register request check failed:", err)
+		L.Error("NFRegister request check failed:", err)
 		return
 	}
 	// handle request body IEs
@@ -39,11 +45,11 @@ func HandleRegister(context *gin.Context) {
 		problemDetails := handleRegisterResponseInternalServerError(err)
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusInternalServerError, problemDetails)
-		L.Error("Register request body handle failed:", err)
+		L.Error("NFRegister request body handle failed:", err)
 		return
 	}
 	// extract nfInstanceId from request uri
-	nfInstanceId := context.Param("nfInstanceID")
+	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
 	fmt.Println("nfInstanceId:", nfInstanceId)
 	// create instance from request body
 	instance := NFInstance{
@@ -66,88 +72,59 @@ func HandleRegister(context *gin.Context) {
 	return
 }
 
-func handleRegisterResponseCreated(request NFProfile) (response NFProfile) {
-	// handle Register Response Created (201)
-	response = request
-	return response
-}
-
-func handleRegisterResponseBadRequest(err error) (registrationError NFProfileRegistrationError) {
-	// handle Register Response Bad Request (400)
-	registrationError.ProblemDetails.Title = "Bad Request"
-	registrationError.ProblemDetails.Status = http.StatusBadRequest
-	registrationError.ProblemDetails.Detail = err.Error()
-	return registrationError
-}
-
-func handleRegisterResponseInternalServerError(err error) (problemDetails ProblemDetails) {
-	// handle Register Response Internal Server Error (500)
-	problemDetails.Title = "Internal Server Error"
-	problemDetails.Status = http.StatusInternalServerError
-	problemDetails.Detail = err.Error()
-	return problemDetails
-}
-
-func checkRegisterIEs(request *NFProfile) (b bool, err error) {
-	b, err = true, nil
-	// check mandatory IEs...
-	// check NFInstanceId
-	L.Debug("Start CheckNFInstanceId:", request.NFInstanceId)
-	b, err = CheckNFInstanceId(request.NFInstanceId)
+func HandleNFProfileRetrieve(context *gin.Context) {
+	var request RetrieveRequest
+	// record context in logs
+	L.Info("NFProfileRetrieve request:", context.Request)
+	// check request body bind json
+	L.Debug("Start bind NFProfileRetrieve request body to json:", context.Request.Body)
+	err := context.ShouldBindJSON(&request)
 	if err != nil {
-		b = false
-		L.Error("CheckNFInstanceId failed:", err)
-		return b, err
+		problemDetails := handleNFProfileRetrieveResponseBadRequest(err)
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, problemDetails)
+		L.Error("NFProfileRetrieve request body bind json failed:", err)
+		return
 	}
-	L.Debug("CheckNFInstanceId success.")
-	// check NFType
-	L.Debug("Start CheckNFType:", request.NFType)
-	b, err = CheckNFType(request.NFType)
-	if err != nil {
-		b = false
-		L.Error("CheckNFType failed:", err)
-		return b, err
-	}
-	L.Debug("CheckNFType success.")
-	// check NFStatus
-	L.Debug("Start CheckNFStatus:", request.NFStatus)
-	b, err = CheckNFStatus(request.NFStatus)
-	if err != nil {
-		b = false
-		L.Error("CheckNFStatus failed:", err)
-		return b, err
-	}
-	L.Debug("CheckNFStatus success.")
-	// check conditional IEs...
-	// check HeartBeatTimer
-	L.Debug("Start CheckHeartBeatTimer:", request.HeartBeatTimer)
-	if request.HeartBeatTimer != 0 {
-		b, err = CheckHeartBeatTimer(request.HeartBeatTimer)
-		if err != nil {
-			b = false
-			L.Error("CheckHeartBeatTimer failed:", err)
-			return b, err
+	L.Debug("NFProfileRetrieve request body bind json success.")
+	// extract nfInstanceId from request uri
+	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
+	fmt.Println("nfInstanceId:", nfInstanceId)
+	// store instance in NRF Service database
+	var response NFInstance
+	exists := func(ins *NFInstance) bool {
+		NRFService.mutex.RLock()
+		defer NRFService.mutex.RUnlock()
+		for _, instances := range NRFService.instances {
+			for _, v := range instances {
+				if v.NFInstanceId == nfInstanceId {
+					*ins = v
+					return true
+				}
+			}
 		}
+		return false
+	}(&response)
+	if !exists {
+		problemDetails := handleNFProfileRetrieveResponseNotFound(err)
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusNotFound, problemDetails)
+		L.Error("NFProfileRetrieve request NFInstance not found:", err)
+		return
 	}
-	L.Debug("CheckHeartBeatTimer success.")
-	return b, err
-}
-
-func handleRegisterIEs(request *NFProfile) (err error) {
-	err = nil
-	// handle NFInstanceId
-	L.Debug("Start HandleNFInstanceId:", request.NFStatus)
-	err = HandleNFInstanceId(&request.NFInstanceId)
-	if err != nil {
-		L.Error("HandleNFInstanceId failed:", err)
+	// check validate request features
+	// check NFType match
+	if request.TargetNFType != "" && request.TargetNFType != response.NFType {
+		err = errors.New("NFProfileRetrieve request NFType does not match actual NFType")
+		problemDetails := handleNFProfileRetrieveResponseBadRequest(err)
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, problemDetails)
+		L.Error("NFProfileRetrieve request body bind json failed:", err)
+		return
 	}
-	L.Debug("HandleNFInstanceId success:", request.NFType)
-	// handle HeartBeatTimer
-	L.Debug("Start HandleHeartBeatTimer:", request.HeartBeatTimer)
-	err = HandleHeartBeatTimer(&request.HeartBeatTimer)
-	if err != nil {
-		L.Error("HandleHeartBeatTimer failed:", err)
-	}
-	L.Debug("HandleHeartBeatTimer success.")
-	return err
+	// return success response
+	context.Header("Content-Type", "application/json")
+	context.Header("Cache-Control", "no-cache")
+	context.JSON(http.StatusOK, response)
+	return
 }
