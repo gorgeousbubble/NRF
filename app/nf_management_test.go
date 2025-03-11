@@ -19,5 +19,5 @@ func TestHandleRegister(t *testing.T) {
 	body := strings.NewReader(`{"nfInstanceID":"331a1fb2-3ac1-43df-a7d0-882d0ee44b7d", "nfType":"AMF", "nfStatus":"REGISTERED"}`)
 	context.Request, _ = http.NewRequest(http.MethodPut, url, body)
 	// test HandleRegister function
-	HandleRegister(context)
+	HandleNFRegister(context)
 }

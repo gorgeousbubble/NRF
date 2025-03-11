@@ -85,6 +85,14 @@ func AcceptEncodingMiddleware() gin.HandlerFunc {
 	}
 }
 
+func SecurityHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-NRF-API-Version", "1.3.0")
+		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		c.Next()
+	}
+}
+
 type GzipResponseWriter struct {
 	gin.ResponseWriter
 	compressWriter *gzip.Writer
