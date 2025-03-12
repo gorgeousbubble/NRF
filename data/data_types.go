@@ -1,11 +1,17 @@
 package data
 
 type NFProfile struct {
-	NFInstanceId   string `json:"nfInstanceId" yaml:"nfInstanceId"`
-	NFType         string `json:"nfType" yaml:"nfType"`
-	NFStatus       string `json:"nfStatus" yaml:"nfStatus"`
-	NFInstanceName string `json:"nfInstanceName" yaml:"nfInstanceName"`
-	HeartBeatTimer int    `json:"heartBeatTimer" yaml:"heartBeatTimer"`
+	NFInstanceId   string      `json:"nfInstanceId" yaml:"nfInstanceId"`
+	NFType         string      `json:"nfType" yaml:"nfType"`
+	NFStatus       string      `json:"nfStatus" yaml:"nfStatus"`
+	NFInstanceName string      `json:"nfInstanceName" yaml:"nfInstanceName"`
+	HeartBeatTimer int         `json:"heartBeatTimer" yaml:"heartBeatTimer"`
+	NFServices     []NFService `json:"nfServices" yaml:"nfServices"`
+}
+
+type NFService struct {
+	ServiceInstanceId string `json:"serviceInstanceId" yaml:"serviceInstanceId"`
+	SupportedFeatures string `json:"supportedFeatures" yaml:"supportedFeatures"`
 }
 
 type NFProfileRegistrationError struct {

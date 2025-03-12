@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/gin-gonic/gin"
 	. "nrf/conf"
+	. "nrf/data"
 	. "nrf/logs"
 	"sync"
 )
@@ -15,10 +16,11 @@ type NRF struct {
 }
 
 type NFInstance struct {
-	NFInstanceId   string `json:"nfInstanceId" yaml:"nfInstanceId"`
-	NFType         string `json:"nfType" yaml:"nfType"`
-	NFStatus       string `json:"nfStatus" yaml:"nfStatus"`
-	HeartBeatTimer int    `json:"heartBeatTimer" yaml:"heartBeatTimer"`
+	NFInstanceId   string      `json:"nfInstanceId" yaml:"nfInstanceId"`
+	NFType         string      `json:"nfType" yaml:"nfType"`
+	NFStatus       string      `json:"nfStatus" yaml:"nfStatus"`
+	HeartBeatTimer int         `json:"heartBeatTimer" yaml:"heartBeatTimer"`
+	NFServices     []NFService `json:"nfServices" yaml:"nfServices"`
 }
 
 func New() *NRF {

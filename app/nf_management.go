@@ -11,8 +11,7 @@ import (
 )
 
 type RetrieveRequest struct {
-	RequesterFeatures []string `form:"requester-features" binding:"omitempty,dive,oneof=ipv4 ipv6 tls http2 service-auth"`
-	TargetNFType      string   `form:"target-nf-type"`
+	RequesterFeatures []string `form:"requester-features" binding:"dive,ipv4,ipv6,tls,http2,service-auth"`
 }
 
 func HandleNFRegister(context *gin.Context) {
@@ -23,7 +22,10 @@ func HandleNFRegister(context *gin.Context) {
 	L.Debug("Start bind NFRegister request body to json:", context.Request.Body)
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
-		registrationError := handleRegisterResponseBadRequest(err)
+		var registrationError NFProfileRegistrationError
+		registrationError.ProblemDetails.Title = "Bad Request"
+		registrationError.ProblemDetails.Status = http.StatusBadRequest
+		registrationError.ProblemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, registrationError)
 		L.Error("NFRegister request body bind json failed:", err)
@@ -31,18 +33,25 @@ func HandleNFRegister(context *gin.Context) {
 	}
 	L.Debug("NFRegister request body bind json success.")
 	// check request body IEs
-	b, err := checkRegisterIEs(&request)
-	if b == false {
-		registrationError := handleRegisterResponseBadRequest(err)
+	b, err := checkNFRegisterIEs(&request)
+	if b == false && err != nil {
+		var registrationError NFProfileRegistrationError
+		registrationError.ProblemDetails.Title = "Bad Request"
+		registrationError.ProblemDetails.Status = http.StatusBadRequest
+		registrationError.ProblemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, registrationError)
 		L.Error("NFRegister request check failed:", err)
 		return
 	}
 	// handle request body IEs
-	err = handleRegisterIEs(&request)
+	response := request
+	err = handleNFRegisterIEs(&response)
 	if err != nil {
-		problemDetails := handleRegisterResponseInternalServerError(err)
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Internal Server Error"
+		problemDetails.Status = http.StatusInternalServerError
+		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusInternalServerError, problemDetails)
 		L.Error("NFRegister request body handle failed:", err)
@@ -53,21 +62,21 @@ func HandleNFRegister(context *gin.Context) {
 	fmt.Println("nfInstanceId:", nfInstanceId)
 	// create instance from request body
 	instance := NFInstance{
-		NFInstanceId:   request.NFInstanceId,
-		NFType:         request.NFType,
-		NFStatus:       request.NFStatus,
-		HeartBeatTimer: request.HeartBeatTimer,
+		NFInstanceId:   nfInstanceId,
+		NFType:         response.NFType,
+		NFStatus:       response.NFStatus,
+		HeartBeatTimer: response.HeartBeatTimer,
+		NFServices:     response.NFServices,
 	}
 	// store instance in NRF Service database
 	func() {
 		NRFService.mutex.Lock()
 		defer NRFService.mutex.Unlock()
-		NRFService.instances[request.NFType] = append(NRFService.instances[request.NFType], instance)
+		NRFService.instances[response.NFType] = append(NRFService.instances[response.NFType], instance)
 	}()
 	// return success response
-	response := handleRegisterResponseCreated(request)
 	context.Header("Content-Type", "application/json")
-	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+request.NFInstanceId)
+	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+nfInstanceId)
 	context.JSON(http.StatusCreated, response)
 	return
 }
@@ -80,7 +89,10 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	L.Debug("Start bind NFProfileRetrieve request body to json:", context.Request.Body)
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
-		problemDetails := handleNFProfileRetrieveResponseBadRequest(err)
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Bad Request"
+		problemDetails.Status = http.StatusBadRequest
+		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, problemDetails)
 		L.Error("NFProfileRetrieve request body bind json failed:", err)
@@ -106,20 +118,28 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 		return false
 	}(&response)
 	if !exists {
-		problemDetails := handleNFProfileRetrieveResponseNotFound(err)
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Not Found"
+		problemDetails.Status = http.StatusNotFound
+		problemDetails.Detail = errors.New("NFInstanceId not found").Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusNotFound, problemDetails)
 		L.Error("NFProfileRetrieve request NFInstance not found:", err)
 		return
 	}
-	// check validate request features
-	// check NFType match
-	if request.TargetNFType != "" && request.TargetNFType != response.NFType {
-		err = errors.New("NFProfileRetrieve request NFType does not match actual NFType")
-		problemDetails := handleNFProfileRetrieveResponseBadRequest(err)
+	// check match request features...
+	var supported []string
+	for _, v := range response.NFServices {
+		supported = append(supported, v.SupportedFeatures)
+	}
+	if !matchFeatures(request.RequesterFeatures, supported) {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Forbidden"
+		problemDetails.Status = http.StatusForbidden
+		problemDetails.Detail = errors.New("request Features not supported").Error()
 		context.Header("Content-Type", "application/problem+json")
-		context.JSON(http.StatusBadRequest, problemDetails)
-		L.Error("NFProfileRetrieve request body bind json failed:", err)
+		context.JSON(http.StatusForbidden, problemDetails)
+		L.Error("NFProfileRetrieve request features not supported:", err)
 		return
 	}
 	// return success response
