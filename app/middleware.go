@@ -4,11 +4,23 @@ import (
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
+	"crypto/sha1"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
 	"strings"
 )
+
+type ETagConfig struct {
+	WeakValidation bool // 是否使用弱验证 (W/)
+	CacheMaxAge    int  // 缓存最大年龄（秒）
+}
+
+var defaultConfig = ETagConfig{
+	WeakValidation: false,
+	CacheMaxAge:    3600,
+}
 
 func ContentEncodingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -91,6 +103,68 @@ func SecurityHeadersMiddleware() gin.HandlerFunc {
 		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		c.Next()
 	}
+}
+
+func ETagMiddleware(config ETagConfig) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// skip if request method is not GET
+		if c.Request.Method != "GET" {
+			c.Next()
+			return
+		}
+		// pre-check client ETag
+		clientETag := c.GetHeader("If-None-Match")
+		c.Next()
+		// get response content
+		respBody, exists := c.Get("responseBody")
+		if !exists || respBody == nil {
+			return
+		}
+		// generate ETag
+		content := respBody.([]byte)
+		etag := generateETag(content, config.WeakValidation)
+		// set response header
+		c.Header("ETag", etag)
+		c.Header("Cache-Control", fmt.Sprintf("public, max-age=%d", config.CacheMaxAge))
+		// verify client ETag
+		if clientETag != "" {
+			if compareETags(clientETag, etag, config.WeakValidation) {
+				c.AbortWithStatus(http.StatusNotModified)
+				return
+			}
+		}
+		// send response
+		c.Data(http.StatusOK, c.Writer.Header().Get("Content-Type"), content)
+	}
+}
+
+func generateETag(data []byte, weak bool) string {
+	hash := fmt.Sprintf("%x", sha1.Sum(data))
+	if weak {
+		return fmt.Sprintf("W/\"%s\"", hash)
+	}
+	return fmt.Sprintf("\"%s\"", hash)
+}
+
+func compareETags(clientTag, serverTag string, weakCompare bool) bool {
+	// clean ETag
+	cleanTag := func(t string) string {
+		if len(t) >= 2 && t[0] == '"' {
+			t = t[1 : len(t)-1]
+		}
+		if len(t) > 2 && t[:2] == "W/" {
+			t = t[2:]
+		}
+		return t
+	}
+	// clean client and server ETag
+	client := cleanTag(clientTag)
+	server := cleanTag(serverTag)
+	// compare ETag
+	if weakCompare {
+		return client == server
+	}
+	return client == server && !strings.HasPrefix(clientTag, "W/")
 }
 
 type GzipResponseWriter struct {

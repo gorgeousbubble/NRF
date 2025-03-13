@@ -55,6 +55,7 @@ func (nrf *NRF) Start() {
 	router.Use(ContentEncodingMiddleware())
 	router.Use(AcceptEncodingMiddleware())
 	router.Use(SecurityHeadersMiddleware())
+	router.Use(ETagMiddleware(defaultConfig))
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{

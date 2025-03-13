@@ -1,17 +1,17 @@
 package data
 
 type NFProfile struct {
-	NFInstanceId   string      `json:"nfInstanceId" yaml:"nfInstanceId"`
-	NFType         string      `json:"nfType" yaml:"nfType"`
-	NFStatus       string      `json:"nfStatus" yaml:"nfStatus"`
-	NFInstanceName string      `json:"nfInstanceName" yaml:"nfInstanceName"`
-	HeartBeatTimer int         `json:"heartBeatTimer" yaml:"heartBeatTimer"`
-	NFServices     []NFService `json:"nfServices" yaml:"nfServices"`
+	NFInstanceId   string      `json:"nfInstanceId" yaml:"nfInstanceId" binding:"required"`
+	NFType         string      `json:"nfType" yaml:"nfType" binding:"required"`
+	NFStatus       string      `json:"nfStatus" yaml:"nfStatus" binding:"required"`
+	NFInstanceName string      `json:"nfInstanceName" yaml:"nfInstanceName" binding:"omitempty"`
+	HeartBeatTimer int         `json:"heartBeatTimer" yaml:"heartBeatTimer" binding:"omitempty"`
+	NFServices     []NFService `json:"nfServices" yaml:"nfServices" binding:"omitempty"`
 }
 
 type NFService struct {
-	ServiceInstanceId string `json:"serviceInstanceId" yaml:"serviceInstanceId"`
-	SupportedFeatures string `json:"supportedFeatures" yaml:"supportedFeatures"`
+	ServiceInstanceId string `json:"serviceInstanceId" yaml:"serviceInstanceId" binding:"required"`
+	SupportedFeatures string `json:"supportedFeatures" yaml:"supportedFeatures" binding:"omitempty"`
 }
 
 type NFProfileRegistrationError struct {
