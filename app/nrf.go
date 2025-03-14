@@ -49,6 +49,8 @@ func (nrf *NRF) Init() (err error) {
 
 func (nrf *NRF) Start() {
 	router := gin.Default()
+	// initialize OAuth2 public key
+	oauthConfig.PublicKey = &oauthConfig.PrivateKey.PublicKey
 	// middleware handle functions
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -56,6 +58,13 @@ func (nrf *NRF) Start() {
 	router.Use(AcceptEncodingMiddleware())
 	router.Use(SecurityHeadersMiddleware())
 	router.Use(ETagMiddleware(defaultConfig))
+	// OAuth2 protect
+	/*protected := router.Group("/nnrf-nfm/v1")
+	protected.Use(AuthorizationMiddleware())
+	{
+		protected.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
+		protected.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
+	}*/
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{

@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"io"
 	"net/http"
 	"strings"
@@ -22,18 +23,57 @@ var defaultConfig = ETagConfig{
 	CacheMaxAge:    3600,
 }
 
+func AuthorizationMiddleware() gin.HandlerFunc {
+	return func(context *gin.Context) {
+		// get auth token header
+		authHeader := context.GetHeader("Authorization")
+		if authHeader == "" {
+			context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "authorization_header_missing",
+			})
+			return
+		}
+		// extract bearer token
+		tokenString := extractBearerToken(authHeader)
+		if tokenString == "" {
+			context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "invalid_authorization_header",
+			})
+			return
+		}
+		// parse and verify token
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return oauthConfig.PublicKey, nil
+		})
+		if err != nil || !token.Valid {
+			context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "invalid_token",
+			})
+			return
+		}
+		// set token context information
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			context.Set("clientID", claims["sub"])
+		}
+		context.Next()
+	}
+}
+
 func ContentEncodingMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		contentEncoding := strings.ToLower(c.GetHeader("Content-Encoding"))
+	return func(context *gin.Context) {
+		contentEncoding := strings.ToLower(context.GetHeader("Content-Encoding"))
 		// skip if not fetch content-encoding
 		if contentEncoding == "" {
-			c.Next()
+			context.Next()
 			return
 		}
 		// read raw request body
-		rawBody, err := io.ReadAll(c.Request.Body)
+		rawBody, err := io.ReadAll(context.Request.Body)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+			context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
 			return
 		}
 		// choose decompress algorithm according encoding type
@@ -42,7 +82,7 @@ func ContentEncodingMiddleware() gin.HandlerFunc {
 		case "gzip":
 			gzipReader, err := gzip.NewReader(bytes.NewBuffer(rawBody))
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid Gzip format"})
+				context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid Gzip format"})
 				return
 			}
 			defer func(gzipReader *gzip.Reader) {
@@ -52,7 +92,7 @@ func ContentEncodingMiddleware() gin.HandlerFunc {
 		case "deflate":
 			deflateReader, err := zlib.NewReader(bytes.NewBuffer(rawBody))
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid Zlib format"})
+				context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid Zlib format"})
 				return
 			}
 			defer func(deflateReader io.ReadCloser) {
@@ -60,63 +100,63 @@ func ContentEncodingMiddleware() gin.HandlerFunc {
 			}(deflateReader)
 			decReader = deflateReader
 		default:
-			c.AbortWithStatusJSON(http.StatusUnsupportedMediaType, gin.H{"error": "Unsupported Content-Encoding"})
+			context.AbortWithStatusJSON(http.StatusUnsupportedMediaType, gin.H{"error": "Unsupported Content-Encoding"})
 			return
 		}
 		// decompress request body
 		decBody, err := io.ReadAll(decReader)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Failed to decompress request body"})
+			context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Failed to decompress request body"})
 			return
 		}
-		c.Request.Body = io.NopCloser(bytes.NewBuffer(decBody))
-		c.Next()
+		context.Request.Body = io.NopCloser(bytes.NewBuffer(decBody))
+		context.Next()
 	}
 }
 
 func AcceptEncodingMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		acceptEncoding := strings.ToLower(c.GetHeader("Accept-Encoding"))
+	return func(context *gin.Context) {
+		acceptEncoding := strings.ToLower(context.GetHeader("Accept-Encoding"))
 		// skip if not fetch accept-encoding
 		if acceptEncoding == "" {
-			c.Next()
+			context.Next()
 			return
 		}
 		// choose compress algorithm according encoding type
 		switch acceptEncoding {
 		case "gzip":
-			c.Writer = &GzipResponseWriter{c.Writer, gzip.NewWriter(c.Writer)}
+			context.Writer = &GzipResponseWriter{context.Writer, gzip.NewWriter(context.Writer)}
 		case "deflate":
-			c.Writer = &DeflateResponseWriter{c.Writer, zlib.NewWriter(c.Writer)}
+			context.Writer = &DeflateResponseWriter{context.Writer, zlib.NewWriter(context.Writer)}
 		default:
-			c.AbortWithStatusJSON(http.StatusUnsupportedMediaType, gin.H{"error": "Unsupported Content-Encoding"})
+			context.AbortWithStatusJSON(http.StatusUnsupportedMediaType, gin.H{"error": "Unsupported Content-Encoding"})
 			return
 		}
-		c.Header("Content-Encoding", acceptEncoding)
-		c.Next()
+		context.Header("Content-Encoding", acceptEncoding)
+		context.Next()
 	}
 }
 
 func SecurityHeadersMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Header("X-NRF-API-Version", "1.3.0")
-		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
-		c.Next()
+	return func(context *gin.Context) {
+		context.Header("X-NRF-API-Version", "1.3.0")
+		context.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		context.Next()
 	}
 }
 
 func ETagMiddleware(config ETagConfig) gin.HandlerFunc {
-	return func(c *gin.Context) {
+	return func(context *gin.Context) {
 		// skip if request method is not GET
-		if c.Request.Method != "GET" {
-			c.Next()
+		if context.Request.Method != "GET" {
+			context.Next()
 			return
 		}
 		// pre-check client ETag
-		clientETag := c.GetHeader("If-None-Match")
-		c.Next()
+		clientETag := context.GetHeader("If-None-Match")
+		context.Next()
 		// get response content
-		respBody, exists := c.Get("responseBody")
+		respBody, exists := context.Get("responseBody")
 		if !exists || respBody == nil {
 			return
 		}
@@ -124,17 +164,17 @@ func ETagMiddleware(config ETagConfig) gin.HandlerFunc {
 		content := respBody.([]byte)
 		etag := generateETag(content, config.WeakValidation)
 		// set response header
-		c.Header("ETag", etag)
-		c.Header("Cache-Control", fmt.Sprintf("public, max-age=%d", config.CacheMaxAge))
+		context.Header("ETag", etag)
+		context.Header("Cache-Control", fmt.Sprintf("public, max-age=%d", config.CacheMaxAge))
 		// verify client ETag
 		if clientETag != "" {
 			if compareETags(clientETag, etag, config.WeakValidation) {
-				c.AbortWithStatus(http.StatusNotModified)
+				context.AbortWithStatus(http.StatusNotModified)
 				return
 			}
 		}
 		// send response
-		c.Data(http.StatusOK, c.Writer.Header().Get("Content-Type"), content)
+		context.Data(http.StatusOK, context.Writer.Header().Get("Content-Type"), content)
 	}
 }
 
@@ -165,6 +205,13 @@ func compareETags(clientTag, serverTag string, weakCompare bool) bool {
 		return client == server
 	}
 	return client == server && !strings.HasPrefix(clientTag, "W/")
+}
+
+func extractBearerToken(header string) string {
+	if len(header) > 7 && header[:7] == "Bearer " {
+		return header[7:]
+	}
+	return ""
 }
 
 type GzipResponseWriter struct {
