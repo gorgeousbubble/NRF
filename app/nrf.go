@@ -59,7 +59,7 @@ func (nrf *NRF) Start() {
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{
-		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegister)
+		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
 		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
 	}
 	// start NRF services

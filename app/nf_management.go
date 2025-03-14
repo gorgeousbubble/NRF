@@ -14,6 +14,32 @@ type RetrieveRequest struct {
 	RequesterFeatures []string `form:"requester-features" binding:"dive,ipv4,ipv6,tls,http2,service-auth"`
 }
 
+func HandleNFRegisterOrNFProfileCompleteReplacement(context *gin.Context) {
+	// extract nfInstanceId from request uri
+	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
+	fmt.Println("nfInstanceId:", nfInstanceId)
+	// found nfInstanceId in database
+	exists := func() bool {
+		NRFService.mutex.RLock()
+		defer NRFService.mutex.RUnlock()
+		for _, instances := range NRFService.instances {
+			for _, v := range instances {
+				if v.NFInstanceId == nfInstanceId {
+					return true
+				}
+			}
+		}
+		return false
+	}()
+	if !exists {
+		// NFRegister
+		HandleNFRegister(context)
+	} else {
+		// NFUpdate (Profile Complete Replacement)
+		HandleNFProfileCompleteReplacement(context)
+	}
+}
+
 func HandleNFRegister(context *gin.Context) {
 	var request NFProfile
 	// record context in logs
@@ -78,6 +104,90 @@ func HandleNFRegister(context *gin.Context) {
 	context.Header("Content-Type", "application/json")
 	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+nfInstanceId)
 	context.JSON(http.StatusCreated, response)
+	return
+}
+
+func HandleNFProfileCompleteReplacement(context *gin.Context) {
+	var request NFProfile
+	L.Info("NFProfileCompleteReplacement request:", context.Request)
+	// check request body bind json
+	L.Debug("Start bind NFProfileCompleteReplacement request body to json:", context.Request.Body)
+	err := context.ShouldBindJSON(&request)
+	if err != nil {
+		var registrationError NFProfileRegistrationError
+		registrationError.ProblemDetails.Title = "Bad Request"
+		registrationError.ProblemDetails.Status = http.StatusBadRequest
+		registrationError.ProblemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, registrationError)
+		L.Error("NFProfileCompleteReplacement request body bind json failed:", err)
+		return
+	}
+	L.Debug("NFProfileCompleteReplacement request body bind json success.")
+	// check request body IEs
+	b, err := checkNFRegisterIEs(&request)
+	if b == false && err != nil {
+		var registrationError NFProfileRegistrationError
+		registrationError.ProblemDetails.Title = "Bad Request"
+		registrationError.ProblemDetails.Status = http.StatusBadRequest
+		registrationError.ProblemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, registrationError)
+		L.Error("NFProfileCompleteReplacement request check failed:", err)
+		return
+	}
+	// handle request body IEs
+	response := request
+	err = handleNFRegisterIEs(&response)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Internal Server Error"
+		problemDetails.Status = http.StatusInternalServerError
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusInternalServerError, problemDetails)
+		L.Error("NFProfileCompleteReplacement request body handle failed:", err)
+		return
+	}
+	// extract nfInstanceId from request uri
+	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
+	fmt.Println("nfInstanceId:", nfInstanceId)
+	// create instance from request body
+	instance := NFInstance{
+		NFInstanceId:   nfInstanceId,
+		NFType:         response.NFType,
+		NFStatus:       response.NFStatus,
+		HeartBeatTimer: response.HeartBeatTimer,
+		NFServices:     response.NFServices,
+	}
+	// store instance in NRF Service database
+	err = func(ins *NFInstance) (err error) {
+		NRFService.mutex.RLock()
+		defer NRFService.mutex.RUnlock()
+		for _, instances := range NRFService.instances {
+			for k, v := range instances {
+				if v.NFInstanceId == nfInstanceId {
+					instances[k], err = *ins, nil
+					return err
+				}
+			}
+		}
+		err = errors.New("NFInstance not found")
+		return err
+	}(&instance)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Internal Server Error"
+		problemDetails.Status = http.StatusInternalServerError
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusInternalServerError, problemDetails)
+		L.Error("NFProfileCompleteReplacement profile complete replacement failed:", err)
+		return
+	}
+	// return success response
+	context.Header("Content-Type", "application/json")
+	context.JSON(http.StatusOK, response)
 	return
 }
 
