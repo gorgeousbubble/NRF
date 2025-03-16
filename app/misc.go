@@ -58,6 +58,7 @@ func handleNFRegisterIEs(request *NFProfile) (err error) {
 	err = HandleNFInstanceId(&request.NFInstanceId)
 	if err != nil {
 		L.Error("HandleNFInstanceId failed:", err)
+		return err
 	}
 	L.Debug("HandleNFInstanceId success:", request.NFType)
 	// handle HeartBeatTimer
@@ -65,6 +66,7 @@ func handleNFRegisterIEs(request *NFProfile) (err error) {
 	err = HandleHeartBeatTimer(&request.HeartBeatTimer)
 	if err != nil {
 		L.Error("HandleHeartBeatTimer failed:", err)
+		return err
 	}
 	L.Debug("HandleHeartBeatTimer success.")
 	return err

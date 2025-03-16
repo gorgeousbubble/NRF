@@ -1,23 +1,210 @@
 package app
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	. "nrf/data"
 	"testing"
 )
 
-func TestHandleRegister(t *testing.T) {
-	NRFService = New()
-	NRFService.Init()
+func setupTestRouter() *gin.Engine {
+	// initialize Gin framework
 	gin.SetMode(gin.TestMode)
-	recorder := httptest.NewRecorder()
-	context, _ := gin.CreateTestContext(recorder)
-	// simulate POST request
-	url := "http://localhost:8080/nnrf-nfm/v1/nf-instances/331a1fb2-3ac1-43df-a7d0-882d0ee44b7d"
-	body := strings.NewReader(`{"nfInstanceID":"331a1fb2-3ac1-43df-a7d0-882d0ee44b7d", "nfType":"AMF", "nfStatus":"REGISTERED"}`)
-	context.Request, _ = http.NewRequest(http.MethodPut, url, body)
-	// test HandleRegister function
-	HandleNFRegister(context)
+	router := gin.New()
+	// middleware handle functions
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+	router.Use(ContentEncodingMiddleware())
+	router.Use(AcceptEncodingMiddleware())
+	router.Use(SecurityHeadersMiddleware())
+	router.Use(ETagMiddleware(defaultConfig))
+	// API route groups
+	nfManagement := router.Group("/nnrf-nfm/v1")
+	{
+		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
+		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
+	}
+	return router
+}
+
+func startTestServer() (*httptest.Server, *gin.Engine) {
+	router := setupTestRouter()
+	return httptest.NewServer(router), router
+}
+
+func TestHandleNFRegister(t *testing.T) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfType := "AMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	// http request NFRegister
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response NFProfile
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, nfInstanceId, response.NFInstanceId)
+	assert.Equal(t, nfType, response.NFType)
+	assert.Equal(t, nfStatus, response.NFStatus)
+}
+
+func TestHandleNFProfileCompleteReplacement(t *testing.T) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfType := "AMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	// http request NFRegister
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response NFProfile
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, nfInstanceId, response.NFInstanceId)
+	assert.Equal(t, nfType, response.NFType)
+	assert.Equal(t, nfStatus, response.NFStatus)
+	// construct network function request content
+	nfStatusNew := "SUSPENDED"
+	// assemble network function http request
+	profileNew := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatusNew,
+	}
+	bodyNew, err := json.Marshal(profileNew)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	// http request NFProfileCompleteReplacement
+	w = httptest.NewRecorder()
+	request, err = http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, nfInstanceId, response.NFInstanceId)
+	assert.Equal(t, nfType, response.NFType)
+	assert.Equal(t, nfStatusNew, response.NFStatus)
+}
+
+func TestHandleNFProfileRetrieve(t *testing.T) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfType := "SMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response NFProfile
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, nfInstanceId, response.NFInstanceId)
+	assert.Equal(t, nfType, response.NFType)
+	assert.Equal(t, nfStatus, response.NFStatus)
+	// http request NFProfileRetrieve
+	w = httptest.NewRecorder()
+	request, err = http.NewRequest("GET", url+"/"+nfInstanceId, nil)
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	assert.Equal(t, http.StatusOK, w.Code)
 }
