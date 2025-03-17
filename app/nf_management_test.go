@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	. "nrf/data"
+	"strings"
 	"testing"
 )
 
@@ -37,7 +38,7 @@ func startTestServer() (*httptest.Server, *gin.Engine) {
 	return httptest.NewServer(router), router
 }
 
-func TestHandleNFRegister(t *testing.T) {
+func TestHandleNFRegisterNormal(t *testing.T) {
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
@@ -80,6 +81,93 @@ func TestHandleNFRegister(t *testing.T) {
 	assert.Equal(t, nfInstanceId, response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatus, response.NFStatus)
+}
+
+func TestHandleNFRegisterNormalWithUpperNFInstanceID(t *testing.T) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := strings.ToUpper(uuid.New().String())
+	nfType := "UPF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	// http request NFRegister
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response NFProfile
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, strings.ToLower(nfInstanceId), response.NFInstanceId)
+	assert.Equal(t, nfType, response.NFType)
+	assert.Equal(t, nfStatus, response.NFStatus)
+}
+
+func TestHandleNFRegisterAbnormalWithoutNFType(t *testing.T) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	// http request NFRegister
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response NFProfileRegistrationError
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "Bad Request", response.ProblemDetails.Title)
+	assert.Equal(t, "Key: 'NFProfile.NFType' Error:Field validation for 'NFType' failed on the 'required' tag", response.ProblemDetails.Detail)
 }
 
 func TestHandleNFProfileCompleteReplacement(t *testing.T) {

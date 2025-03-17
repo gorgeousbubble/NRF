@@ -11,7 +11,7 @@ import (
 )
 
 type RetrieveRequest struct {
-	RequesterFeatures []string `form:"requester-features" binding:"dive,ipv4,ipv6,tls,http2,service-auth"`
+	RequesterFeatures []string `form:"requester-features" binding:"omitempty,dive,ipv4,ipv6,tls,http2,service-auth"`
 }
 
 func HandleNFRegisterOrNFProfileCompleteReplacement(context *gin.Context) {
