@@ -1,2 +1,3 @@
+sbiTLSSettings: "mutual-tls" # SBI TLS Settings: "non-tls", "one-way-tls" or "mutual-tls"
 acceptNFHeartBeatTimer: false
 defaultHeartBeatTimer: 60

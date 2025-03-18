@@ -7,8 +7,9 @@ import (
 )
 
 type NRFConf struct {
-	AcceptNFHeartBeatTimer bool `json:"acceptNFHeartBeatTimer" yaml:"acceptNFHeartBeatTimer"`
-	DefaultHeartBeatTimer  int  `json:"defaultHeartBeatTimer" yaml:"defaultHeartBeatTimer"`
+	SBITLSSettings         string `json:"sbiTLSSettings" yaml:"sbiTLSSettings"`
+	AcceptNFHeartBeatTimer bool   `json:"acceptNFHeartBeatTimer" yaml:"acceptNFHeartBeatTimer"`
+	DefaultHeartBeatTimer  int    `json:"defaultHeartBeatTimer" yaml:"defaultHeartBeatTimer"`
 }
 
 func MarshalTo(file string, t interface{}) (err error) {

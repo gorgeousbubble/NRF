@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	. "nrf/app"
+	. "nrf/logs"
 	"os"
 	"runtime"
 )
@@ -24,8 +25,8 @@ func main() {
 	err := NRFService.Init()
 	if err != nil {
 		fmt.Println("The NRF initialization failed:", err.Error())
+		L.Error("The NRF initialization failed:", err.Error())
 		os.Exit(1)
 	}
 	NRFService.Start()
-	fmt.Println("The NRF is running...")
 }
