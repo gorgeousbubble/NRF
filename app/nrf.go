@@ -58,7 +58,7 @@ func (nrf *NRF) Start() {
 	router := gin.Default()
 	// enable SBI TLS layer
 	var tlsConfig *tls.Config
-	tlsSettings := NRFConfigure.SBITLSSettings
+	tlsSettings := NRFConfigure.SBITLSSettings.TLSType
 	if tlsSettings != "non-tls" {
 		tlsConfig = &tls.Config{
 			MinVersion: tls.VersionTLS13,

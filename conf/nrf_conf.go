@@ -7,9 +7,19 @@ import (
 )
 
 type NRFConf struct {
-	SBITLSSettings         string `json:"sbiTLSSettings" yaml:"sbiTLSSettings"`
-	AcceptNFHeartBeatTimer bool   `json:"acceptNFHeartBeatTimer" yaml:"acceptNFHeartBeatTimer"`
-	DefaultHeartBeatTimer  int    `json:"defaultHeartBeatTimer" yaml:"defaultHeartBeatTimer"`
+	SBIIPAddr              string         `json:"sbiIPAddr" yaml:"sbiIPAddr"`
+	SBIPort                int            `json:"sbiPort" yaml:"sbiPort"`
+	SBITLSSettings         SBITLSSettings `json:"sbiTLSSettings" yaml:"sbiTLSSettings"`
+	AcceptNFHeartBeatTimer bool           `json:"acceptNFHeartBeatTimer" yaml:"acceptNFHeartBeatTimer"`
+	DefaultHeartBeatTimer  int            `json:"defaultHeartBeatTimer" yaml:"defaultHeartBeatTimer"`
+}
+
+type SBITLSSettings struct {
+	TLSType    string `json:"tlsType" yaml:"tlsType"`
+	TLSVersion string `json:"tlsVersion" yaml:"tlsVersion"`
+	KeyFile    string `json:"keyFile" yaml:"keyFile"`
+	CertFile   string `json:"certFile" yaml:"certFile"`
+	CAFile     string `json:"caFile" yaml:"caFile"`
 }
 
 func MarshalTo(file string, t interface{}) (err error) {
