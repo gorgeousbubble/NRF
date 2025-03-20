@@ -258,3 +258,59 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	context.JSON(http.StatusOK, response)
 	return
 }
+
+func HandleNFRegisterSharedData(context *gin.Context) {
+	var request SharedData
+	// record context in logs
+	L.Info("NFRegister (SharedData) request:", context.Request)
+	// check request body bind json
+	L.Debug("Start bind NFRegister (SharedData) request body to json:", context.Request.Body)
+	err := context.ShouldBindJSON(&request)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Bad Request"
+		problemDetails.Status = http.StatusBadRequest
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, problemDetails)
+		L.Error("NFRegister request (SharedData) body bind json failed:", err)
+		return
+	}
+	L.Debug("NFRegister request body bind json success.")
+	// check request body IEs
+	b, err := checkNFRegisterSharedDataIEs(&request)
+	if b == false && err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Bad Request"
+		problemDetails.Status = http.StatusBadRequest
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, problemDetails)
+		L.Error("NFRegister request (SharedData) check failed:", err)
+		return
+	}
+	// handle request body IEs
+	response := request
+	err = handleNFRegisterSharedDataIEs(&response)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Internal Server Error"
+		problemDetails.Status = http.StatusInternalServerError
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusInternalServerError, problemDetails)
+		L.Error("NFRegister request body handle failed:", err)
+		return
+	}
+	// extract sharedDataId from request uri
+	sharedDataId := strings.ToLower(context.Param("sharedDataId"))
+	fmt.Println("sharedDataId:", sharedDataId)
+	//
+	// store sharedData to database...
+	//
+	// return success response
+	context.Header("Content-Type", "application/json")
+	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+sharedDataId)
+	context.JSON(http.StatusCreated, response)
+	return
+}

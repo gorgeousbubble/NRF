@@ -25,6 +25,24 @@ func HandleNFInstanceId(nfInstanceId *string) (err error) {
 	return err
 }
 
+func CheckSharedDataId(SharedDataId string) (b bool, err error) {
+	b, err = true, nil
+	// parse SharedDataId
+	_, err = uuid.Parse(SharedDataId)
+	if err != nil {
+		b = false
+		return b, err
+	}
+	return b, err
+}
+
+func HandleSharedDataId(SharedDataId *string) (err error) {
+	err = nil
+	// handle SharedDataId
+	*SharedDataId = strings.ToLower(*SharedDataId)
+	return err
+}
+
 func CheckNFType(nfType string) (b bool, err error) {
 	b, err = true, nil
 	// check NFType

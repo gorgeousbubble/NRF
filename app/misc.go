@@ -54,13 +54,13 @@ func checkNFRegisterIEs(request *NFProfile) (b bool, err error) {
 func handleNFRegisterIEs(request *NFProfile) (err error) {
 	err = nil
 	// handle NFInstanceId
-	L.Debug("Start HandleNFInstanceId:", request.NFStatus)
+	L.Debug("Start HandleNFInstanceId:", request.NFInstanceId)
 	err = HandleNFInstanceId(&request.NFInstanceId)
 	if err != nil {
 		L.Error("HandleNFInstanceId failed:", err)
 		return err
 	}
-	L.Debug("HandleNFInstanceId success:", request.NFType)
+	L.Debug("HandleNFInstanceId success:", request.NFInstanceId)
 	// handle HeartBeatTimer
 	L.Debug("Start HandleHeartBeatTimer:", request.HeartBeatTimer)
 	err = HandleHeartBeatTimer(&request.HeartBeatTimer)
@@ -69,6 +69,34 @@ func handleNFRegisterIEs(request *NFProfile) (err error) {
 		return err
 	}
 	L.Debug("HandleHeartBeatTimer success.")
+	return err
+}
+
+func checkNFRegisterSharedDataIEs(request *SharedData) (b bool, err error) {
+	b, err = true, nil
+	// check mandatory IEs...
+	// check SharedDataId
+	L.Debug("Start CheckSharedDataId:", request.SharedDataId)
+	b, err = CheckSharedDataId(request.SharedDataId)
+	if err != nil {
+		b = false
+		L.Error("CheckSharedDataId failed:", err)
+		return b, err
+	}
+	L.Debug("CheckSharedDataId success.")
+	return b, err
+}
+
+func handleNFRegisterSharedDataIEs(request *SharedData) (err error) {
+	err = nil
+	// handle NFInstanceId
+	L.Debug("Start HandleSharedDataId:", request.SharedDataId)
+	err = HandleSharedDataId(&request.SharedDataId)
+	if err != nil {
+		L.Error("HandleSharedDataId failed:", err)
+		return err
+	}
+	L.Debug("HandleSharedDataId success:", request.SharedDataId)
 	return err
 }
 

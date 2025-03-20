@@ -31,3 +31,9 @@ type ProblemDetails struct {
 type SharedDataIdList struct {
 	SharedDataIds []string `json:"sharedDataIds" yaml:"sharedDataIds"`
 }
+
+type SharedData struct {
+	SharedDataId      string    `json:"sharedDataId" yaml:"sharedDataId" binding:"required"`
+	SharedProfileData NFProfile `json:"sharedProfileData" yaml:"sharedProfileData" binding:"omitempty"`
+	SharedServiceData NFService `json:"sharedServiceData" yaml:"sharedServiceData" binding:"omitempty"`
+}

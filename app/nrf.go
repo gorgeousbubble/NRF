@@ -106,6 +106,7 @@ func (nrf *NRF) Start() {
 	{
 		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
 		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
+		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterSharedData)
 	}
 	// start NRF services
 	if tlsSettings == "non-tls" {
