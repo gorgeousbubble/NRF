@@ -17,8 +17,9 @@ import (
 var NRFService *NRF
 
 type NRF struct {
-	instances map[string][]NFInstance
-	mutex     sync.RWMutex
+	instances    map[string][]NFInstance
+	repositories map[string][]SharedRepository
+	mutex        sync.RWMutex
 }
 
 type NFInstance struct {
@@ -27,6 +28,12 @@ type NFInstance struct {
 	NFStatus       string      `json:"nfStatus" yaml:"nfStatus"`
 	HeartBeatTimer int         `json:"heartBeatTimer" yaml:"heartBeatTimer"`
 	NFServices     []NFService `json:"nfServices" yaml:"nfServices"`
+}
+
+type SharedRepository struct {
+	SharedDataId      string    `json:"sharedDataId" yaml:"sharedDataId"`
+	SharedProfileData NFProfile `json:"sharedProfileData" yaml:"sharedProfileData"`
+	SharedServiceData NFService `json:"sharedServiceData" yaml:"sharedServiceData"`
 }
 
 func New() *NRF {
@@ -106,7 +113,7 @@ func (nrf *NRF) Start() {
 	{
 		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
 		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
-		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterSharedData)
+		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFProfileCompleteReplacementSharedData)
 	}
 	// start NRF services
 	if tlsSettings == "non-tls" {

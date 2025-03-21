@@ -161,13 +161,13 @@ func HandleNFProfileCompleteReplacement(context *gin.Context) {
 		NFServices:     response.NFServices,
 	}
 	// store instance in NRF Service database
-	err = func(ins *NFInstance) (err error) {
+	err = func(instance *NFInstance) (err error) {
 		NRFService.mutex.RLock()
 		defer NRFService.mutex.RUnlock()
 		for _, instances := range NRFService.instances {
 			for k, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
-					instances[k], err = *ins, nil
+					instances[k], err = *instance, nil
 					return err
 				}
 			}
@@ -259,6 +259,32 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	return
 }
 
+func HandleNFRegisterOrNFProfileCompleteReplacementSharedData(context *gin.Context) {
+	// extract sharedDataId from request uri
+	sharedDataId := strings.ToLower(context.Param("sharedDataId"))
+	fmt.Println("sharedDataId:", sharedDataId)
+	// found sharedDataId in database
+	exists := func() bool {
+		NRFService.mutex.RLock()
+		defer NRFService.mutex.RUnlock()
+		for _, repositories := range NRFService.repositories {
+			for _, v := range repositories {
+				if v.SharedDataId == sharedDataId {
+					return true
+				}
+			}
+		}
+		return false
+	}()
+	if !exists {
+		// NFRegister (SharedData)
+		HandleNFRegisterSharedData(context)
+	} else {
+		// NFUpdate (Profile Complete Replacement) (SharedData)
+		HandleNFProfileCompleteReplacementSharedData(context)
+	}
+}
+
 func HandleNFRegisterSharedData(context *gin.Context) {
 	var request SharedData
 	// record context in logs
@@ -273,10 +299,10 @@ func HandleNFRegisterSharedData(context *gin.Context) {
 		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, problemDetails)
-		L.Error("NFRegister request (SharedData) body bind json failed:", err)
+		L.Error("NFRegister (SharedData) request body bind json failed:", err)
 		return
 	}
-	L.Debug("NFRegister request body bind json success.")
+	L.Debug("NFRegister (SharedData) request body bind json success.")
 	// check request body IEs
 	b, err := checkNFRegisterSharedDataIEs(&request)
 	if b == false && err != nil {
@@ -286,7 +312,7 @@ func HandleNFRegisterSharedData(context *gin.Context) {
 		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, problemDetails)
-		L.Error("NFRegister request (SharedData) check failed:", err)
+		L.Error("NFRegister (SharedData) request check failed:", err)
 		return
 	}
 	// handle request body IEs
@@ -299,18 +325,109 @@ func HandleNFRegisterSharedData(context *gin.Context) {
 		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusInternalServerError, problemDetails)
-		L.Error("NFRegister request body handle failed:", err)
+		L.Error("NFRegister (SharedData) request body handle failed:", err)
 		return
 	}
 	// extract sharedDataId from request uri
 	sharedDataId := strings.ToLower(context.Param("sharedDataId"))
 	fmt.Println("sharedDataId:", sharedDataId)
-	//
-	// store sharedData to database...
-	//
+	// create repository from request body
+	repository := SharedRepository{
+		SharedDataId:      sharedDataId,
+		SharedProfileData: response.SharedProfileData,
+		SharedServiceData: response.SharedServiceData,
+	}
+	// store repository in NRF Service database
+	func() {
+		NRFService.mutex.Lock()
+		defer NRFService.mutex.Unlock()
+		NRFService.repositories[response.SharedDataId] = append(NRFService.repositories[response.SharedDataId], repository)
+	}()
 	// return success response
 	context.Header("Content-Type", "application/json")
-	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+sharedDataId)
+	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/shared-data/"+sharedDataId)
 	context.JSON(http.StatusCreated, response)
+	return
+}
+
+func HandleNFProfileCompleteReplacementSharedData(context *gin.Context) {
+	var request SharedData
+	L.Info("NFProfileCompleteReplacement (SharedData) request:", context.Request)
+	// check request body bind json
+	L.Debug("Start bind NFProfileCompleteReplacement (SharedData) request body to json:", context.Request.Body)
+	err := context.ShouldBindJSON(&request)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Bad Request"
+		problemDetails.Status = http.StatusBadRequest
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, problemDetails)
+		L.Error("NFProfileCompleteReplacement (SharedData) request body bind json failed:", err)
+		return
+	}
+	L.Debug("NFProfileCompleteReplacement (SharedData) request body bind json success.")
+	// check request body IEs
+	b, err := checkNFRegisterSharedDataIEs(&request)
+	if b == false && err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Bad Request"
+		problemDetails.Status = http.StatusBadRequest
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, problemDetails)
+		L.Error("NFProfileCompleteReplacement (SharedData) request check failed:", err)
+		return
+	}
+	// handle request body IEs
+	response := request
+	err = handleNFRegisterSharedDataIEs(&response)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Internal Server Error"
+		problemDetails.Status = http.StatusInternalServerError
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusInternalServerError, problemDetails)
+		L.Error("NFProfileCompleteReplacement (SharedData) request body handle failed:", err)
+		return
+	}
+	// extract sharedDataId from request uri
+	sharedDataId := strings.ToLower(context.Param("sharedDataId"))
+	fmt.Println("sharedDataId:", sharedDataId)
+	// create repository from request body
+	repository := SharedRepository{
+		SharedDataId:      sharedDataId,
+		SharedProfileData: response.SharedProfileData,
+		SharedServiceData: response.SharedServiceData,
+	}
+	// store repository in SharedRepositories database
+	err = func(repo *SharedRepository) (err error) {
+		NRFService.mutex.RLock()
+		defer NRFService.mutex.RUnlock()
+		for _, repositories := range NRFService.repositories {
+			for k, v := range repositories {
+				if v.SharedDataId == sharedDataId {
+					repositories[k], err = *repo, nil
+					return err
+				}
+			}
+		}
+		err = errors.New("SharedRepositories not found")
+		return err
+	}(&repository)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Internal Server Error"
+		problemDetails.Status = http.StatusInternalServerError
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusInternalServerError, problemDetails)
+		L.Error("NFProfileCompleteReplacement (SharedData) profile complete replacement failed:", err)
+		return
+	}
+	// return success response
+	context.Header("Content-Type", "application/json")
+	context.JSON(http.StatusOK, response)
 	return
 }
