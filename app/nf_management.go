@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	. "nrf/conf"
 	. "nrf/data"
 	. "nrf/logs"
 	"strings"
@@ -260,6 +261,12 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 }
 
 func HandleNFRegisterOrNFProfileCompleteReplacementSharedData(context *gin.Context) {
+	// check allowedSharedData feature enable
+	if !NRFConfigure.AllowedSharedData {
+		context.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "SharedData feature not allowed"})
+		L.Info("NFProfileCompleteReplacement (SharedData) abort caused by SharedData feature not allowed:", context.Request)
+		return
+	}
 	// extract sharedDataId from request uri
 	sharedDataId := strings.ToLower(context.Param("sharedDataId"))
 	fmt.Println("sharedDataId:", sharedDataId)

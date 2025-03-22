@@ -12,6 +12,7 @@ type NRFConf struct {
 	SBITLSSettings         SBITLSSettings `json:"sbiTLSSettings" yaml:"sbiTLSSettings"`
 	AcceptNFHeartBeatTimer bool           `json:"acceptNFHeartBeatTimer" yaml:"acceptNFHeartBeatTimer"`
 	DefaultHeartBeatTimer  int            `json:"defaultHeartBeatTimer" yaml:"defaultHeartBeatTimer"`
+	AllowedSharedData      bool           `json:"allowedSharedData" yaml:"allowedSharedData"`
 }
 
 type SBITLSSettings struct {

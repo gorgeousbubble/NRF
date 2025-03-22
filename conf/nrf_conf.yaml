@@ -8,3 +8,4 @@ sbiTLSSettings:
   caFile: "./cert/ca.crt" # <CA Certificate Authority>
 acceptNFHeartBeatTimer: false
 defaultHeartBeatTimer: 60
+allowedSharedData: false
