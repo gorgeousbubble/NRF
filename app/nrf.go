@@ -113,7 +113,8 @@ func (nrf *NRF) Start() {
 	{
 		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
 		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
-		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFProfileCompleteReplacementSharedData)
+		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFSharedDataCompleteReplacement)
+		nfManagement.GET("shared-data/:sharedDataId", HandleNFSharedDataRetrieve)
 	}
 	// start NRF services
 	if tlsSettings == "non-tls" {

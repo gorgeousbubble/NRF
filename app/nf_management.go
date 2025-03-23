@@ -212,15 +212,15 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	// extract nfInstanceId from request uri
 	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
 	fmt.Println("nfInstanceId:", nfInstanceId)
-	// store instance in NRF Service database
+	// found instance in NRF Service database
 	var response NFInstance
-	exists := func(ins *NFInstance) bool {
+	exists := func(instance *NFInstance) bool {
 		NRFService.mutex.RLock()
 		defer NRFService.mutex.RUnlock()
 		for _, instances := range NRFService.instances {
 			for _, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
-					*ins = v
+					*instance = v
 					return true
 				}
 			}
@@ -261,11 +261,11 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	return
 }
 
-func HandleNFRegisterOrNFProfileCompleteReplacementSharedData(context *gin.Context) {
+func HandleNFRegisterOrNFSharedDataCompleteReplacement(context *gin.Context) {
 	// check allowedSharedData feature enable
 	if !NRFConfigure.AllowedSharedData {
 		context.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "SharedData feature not allowed"})
-		L.Info("NFProfileCompleteReplacement (SharedData) abort caused by SharedData feature not allowed:", context.Request)
+		L.Info("NFRegisterOrNFSharedDataCompleteReplacement abort caused by SharedData feature not allowed:", context.Request)
 		return
 	}
 	// extract sharedDataId from request uri
@@ -288,8 +288,8 @@ func HandleNFRegisterOrNFProfileCompleteReplacementSharedData(context *gin.Conte
 		// NFRegister (SharedData)
 		HandleNFRegisterSharedData(context)
 	} else {
-		// NFUpdate (Profile Complete Replacement) (SharedData)
-		HandleNFProfileCompleteReplacementSharedData(context)
+		// NFUpdate (SharedData Complete Replacement)
+		HandleNFSharedDataCompleteReplacement(context)
 	}
 }
 
@@ -358,11 +358,11 @@ func HandleNFRegisterSharedData(context *gin.Context) {
 	return
 }
 
-func HandleNFProfileCompleteReplacementSharedData(context *gin.Context) {
+func HandleNFSharedDataCompleteReplacement(context *gin.Context) {
 	var request SharedData
-	L.Info("NFProfileCompleteReplacement (SharedData) request:", context.Request)
+	L.Info("NFSharedDataCompleteReplacement request:", context.Request)
 	// check request body bind json
-	L.Debug("Start bind NFProfileCompleteReplacement (SharedData) request body to json:", context.Request.Body)
+	L.Debug("Start bind NFSharedDataCompleteReplacement request body to json:", context.Request.Body)
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
 		var problemDetails ProblemDetails
@@ -371,10 +371,10 @@ func HandleNFProfileCompleteReplacementSharedData(context *gin.Context) {
 		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, problemDetails)
-		L.Error("NFProfileCompleteReplacement (SharedData) request body bind json failed:", err)
+		L.Error("NFSharedDataCompleteReplacement request body bind json failed:", err)
 		return
 	}
-	L.Debug("NFProfileCompleteReplacement (SharedData) request body bind json success.")
+	L.Debug("NFSharedDataCompleteReplacement request body bind json success.")
 	// check request body IEs
 	b, err := checkNFRegisterSharedDataIEs(&request)
 	if b == false && err != nil {
@@ -384,7 +384,7 @@ func HandleNFProfileCompleteReplacementSharedData(context *gin.Context) {
 		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusBadRequest, problemDetails)
-		L.Error("NFProfileCompleteReplacement (SharedData) request check failed:", err)
+		L.Error("NFSharedDataCompleteReplacement request check failed:", err)
 		return
 	}
 	// handle request body IEs
@@ -397,7 +397,7 @@ func HandleNFProfileCompleteReplacementSharedData(context *gin.Context) {
 		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusInternalServerError, problemDetails)
-		L.Error("NFProfileCompleteReplacement (SharedData) request body handle failed:", err)
+		L.Error("NFSharedDataCompleteReplacement request body handle failed:", err)
 		return
 	}
 	// extract sharedDataId from request uri
@@ -431,11 +431,81 @@ func HandleNFProfileCompleteReplacementSharedData(context *gin.Context) {
 		problemDetails.Detail = err.Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusInternalServerError, problemDetails)
-		L.Error("NFProfileCompleteReplacement (SharedData) profile complete replacement failed:", err)
+		L.Error("NFSharedDataCompleteReplacement profile complete replacement failed:", err)
 		return
 	}
 	// return success response
 	context.Header("Content-Type", "application/json")
+	context.JSON(http.StatusOK, response)
+	return
+}
+
+func HandleNFSharedDataRetrieve(context *gin.Context) {
+	var request RetrieveRequest
+	var requestFeatureFilter bool
+	// record context in logs
+	L.Info("NFSharedDataRetrieve request:", context.Request)
+	// check request body bind json
+	L.Debug("Start bind NFSharedDataRetrieve request body to json:", context.Request.Body)
+	err := context.ShouldBindJSON(&request)
+	if err != nil {
+		requestFeatureFilter = false
+		L.Debug("NFSharedDataRetrieve request body bind json failed:", err.Error())
+		L.Debug("NFSharedDataRetrieve request-feature filter not allowed.")
+	} else {
+		requestFeatureFilter = true
+		L.Debug("NFSharedDataRetrieve request body bind json success.")
+		L.Debug("NFSharedDataRetrieve request-feature filter allowed.")
+	}
+	// extract sharedDataId from request uri
+	sharedDataId := strings.ToLower(context.Param("sharedDataId"))
+	fmt.Println("sharedDataId:", sharedDataId)
+	// store instance in NRF Service database
+	var response SharedRepository
+	exists := func(repo *SharedRepository) bool {
+		NRFService.mutex.RLock()
+		defer NRFService.mutex.RUnlock()
+		for _, repositories := range NRFService.repositories {
+			for _, v := range repositories {
+				if v.SharedDataId == sharedDataId {
+					*repo = v
+					return true
+				}
+			}
+		}
+		return false
+	}(&response)
+	if !exists {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Not Found"
+		problemDetails.Status = http.StatusNotFound
+		problemDetails.Detail = errors.New("SharedDataId not found").Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusNotFound, problemDetails)
+		L.Error("NFSharedDataRetrieve request SharedData not found:", err)
+		return
+	}
+	// check match request features (request-feature filter allowed)
+	if requestFeatureFilter {
+		var supported []string
+		// SharedProfileData and SharedServiceData are conditional...
+		for _, v := range response.SharedProfileData.NFServices {
+			supported = append(supported, v.SupportedFeatures)
+		}
+		if !matchFeatures(request.RequesterFeatures, supported) {
+			var problemDetails ProblemDetails
+			problemDetails.Title = "Forbidden"
+			problemDetails.Status = http.StatusForbidden
+			problemDetails.Detail = errors.New("request Features not supported").Error()
+			context.Header("Content-Type", "application/problem+json")
+			context.JSON(http.StatusForbidden, problemDetails)
+			L.Error("NFSharedDataRetrieve request features not supported:", err)
+			return
+		}
+	}
+	// return success response
+	context.Header("Content-Type", "application/json")
+	context.Header("Cache-Control", "no-cache")
 	context.JSON(http.StatusOK, response)
 	return
 }
