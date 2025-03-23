@@ -194,22 +194,21 @@ func HandleNFProfileCompleteReplacement(context *gin.Context) {
 
 func HandleNFProfileRetrieve(context *gin.Context) {
 	var request RetrieveRequest
+	var requestFeatureFilter bool
 	// record context in logs
 	L.Info("NFProfileRetrieve request:", context.Request)
 	// check request body bind json
 	L.Debug("Start bind NFProfileRetrieve request body to json:", context.Request.Body)
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
-		var problemDetails ProblemDetails
-		problemDetails.Title = "Bad Request"
-		problemDetails.Status = http.StatusBadRequest
-		problemDetails.Detail = err.Error()
-		context.Header("Content-Type", "application/problem+json")
-		context.JSON(http.StatusBadRequest, problemDetails)
-		L.Error("NFProfileRetrieve request body bind json failed:", err)
-		return
+		requestFeatureFilter = false
+		L.Debug("NFProfileRetrieve request body bind json failed:", err.Error())
+		L.Debug("NFProfileRetrieve request-feature filter not allowed.")
+	} else {
+		requestFeatureFilter = true
+		L.Debug("NFProfileRetrieve request body bind json success.")
+		L.Debug("NFProfileRetrieve request-feature filter allowed.")
 	}
-	L.Debug("NFProfileRetrieve request body bind json success.")
 	// extract nfInstanceId from request uri
 	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
 	fmt.Println("nfInstanceId:", nfInstanceId)
@@ -238,20 +237,22 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 		L.Error("NFProfileRetrieve request NFInstance not found:", err)
 		return
 	}
-	// check match request features...
-	var supported []string
-	for _, v := range response.NFServices {
-		supported = append(supported, v.SupportedFeatures)
-	}
-	if !matchFeatures(request.RequesterFeatures, supported) {
-		var problemDetails ProblemDetails
-		problemDetails.Title = "Forbidden"
-		problemDetails.Status = http.StatusForbidden
-		problemDetails.Detail = errors.New("request Features not supported").Error()
-		context.Header("Content-Type", "application/problem+json")
-		context.JSON(http.StatusForbidden, problemDetails)
-		L.Error("NFProfileRetrieve request features not supported:", err)
-		return
+	// check match request features (request-feature filter allowed)
+	if requestFeatureFilter {
+		var supported []string
+		for _, v := range response.NFServices {
+			supported = append(supported, v.SupportedFeatures)
+		}
+		if !matchFeatures(request.RequesterFeatures, supported) {
+			var problemDetails ProblemDetails
+			problemDetails.Title = "Forbidden"
+			problemDetails.Status = http.StatusForbidden
+			problemDetails.Detail = errors.New("request Features not supported").Error()
+			context.Header("Content-Type", "application/problem+json")
+			context.JSON(http.StatusForbidden, problemDetails)
+			L.Error("NFProfileRetrieve request features not supported:", err)
+			return
+		}
 	}
 	// return success response
 	context.Header("Content-Type", "application/json")

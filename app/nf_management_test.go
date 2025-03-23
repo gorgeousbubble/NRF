@@ -294,5 +294,13 @@ func TestHandleNFProfileRetrieve(t *testing.T) {
 	}
 	request.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, request)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, nfInstanceId, response.NFInstanceId)
+	assert.Equal(t, nfType, response.NFType)
+	assert.Equal(t, nfStatus, response.NFStatus)
 }
