@@ -38,7 +38,8 @@ type SharedRepository struct {
 
 func New() *NRF {
 	return &NRF{
-		instances: make(map[string][]NFInstance),
+		instances:    make(map[string][]NFInstance),
+		repositories: make(map[string][]SharedRepository),
 	}
 }
 
