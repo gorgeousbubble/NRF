@@ -103,7 +103,7 @@ func HandleNFRegister(context *gin.Context) {
 	}()
 	// return success response
 	context.Header("Content-Type", "application/json")
-	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/nf-instances/"+nfInstanceId)
+	context.Header("Location", formLocation(context, "nnrf-nfm", "v1", "nf-instances", nfInstanceId))
 	context.JSON(http.StatusCreated, response)
 	return
 }
@@ -353,7 +353,7 @@ func HandleNFRegisterSharedData(context *gin.Context) {
 	}()
 	// return success response
 	context.Header("Content-Type", "application/json")
-	context.Header("Location", "http://localhost:8000/nnrf-nfm/v1/shared-data/"+sharedDataId)
+	context.Header("Location", formLocation(context, "nnrf-nfm", "v1", "shared-data", sharedDataId))
 	context.JSON(http.StatusCreated, response)
 	return
 }

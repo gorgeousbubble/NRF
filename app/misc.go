@@ -1,9 +1,14 @@
 package app
 
 import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"net"
+	"net/http"
 	. "nrf/data"
 	. "nrf/logs"
 	. "nrf/util"
+	"strings"
 )
 
 func checkNFRegisterIEs(request *NFProfile) (b bool, err error) {
@@ -111,4 +116,52 @@ func matchFeatures(required, supported []string) bool {
 		}
 	}
 	return true
+}
+
+func autodetectHttpProtocol(context *gin.Context) (protocol string) {
+	// autodetect http protocol from header "X-Forwarded-Proto"
+	if protocol = context.GetHeader("X-Forwarded-Proto"); protocol != "" {
+		return protocol
+	}
+	// autodetect http protocol from header "X-Forwarded-Scheme"
+	if protocol = context.GetHeader("X-Forwarded-Scheme"); protocol != "" {
+		return protocol
+	}
+	// autodetect http protocol from request tls type
+	if context.Request.TLS != nil {
+		protocol = "https"
+	} else {
+		protocol = "http"
+	}
+	return protocol
+}
+
+func autodetectHttpHost(context *gin.Context) (host string) {
+	// autodetect http host from header "X-Forwarded-Host"
+	if host = context.GetHeader("X-Forwarded-Host"); host != "" {
+		return host
+	}
+	// autodetect http host from request host
+	host = context.Request.Host
+	if !strings.Contains(host, ":") {
+		switch autodetectHttpProtocol(context) {
+		case "http":
+			host += ":80"
+		case "https":
+			host += ":443"
+		default:
+			host += fetchListenPort(context)
+		}
+	}
+	return host
+}
+
+func fetchListenPort(context *gin.Context) (port string) {
+	addr := context.Request.Context().Value(http.LocalAddrContextKey).(net.Addr)
+	_, port, _ = net.SplitHostPort(addr.String())
+	return port
+}
+
+func formLocation(context *gin.Context, apiName string, apiVersion string, resource string, identity string) (location string) {
+	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", autodetectHttpProtocol(context), autodetectHttpHost(context), apiName, apiVersion, resource, identity)
 }
