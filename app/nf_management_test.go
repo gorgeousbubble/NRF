@@ -442,3 +442,71 @@ func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
 	assert.Equal(t, nfType, response.SharedProfileData.NFType)
 	assert.Equal(t, nfStatusNew, response.SharedProfileData.NFStatus)
 }
+
+func TestHandleNFSharedDataRetrieve(t *testing.T) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/shared-data"
+	sharedDataId := uuid.New().String()
+	nfInstanceId := uuid.New().String()
+	nfType := "SMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	sharedData := SharedData{
+		SharedDataId:      sharedDataId,
+		SharedProfileData: profile,
+	}
+	body, err := json.Marshal(sharedData)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response SharedData
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, sharedDataId, response.SharedDataId)
+	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
+	assert.Equal(t, nfType, response.SharedProfileData.NFType)
+	assert.Equal(t, nfStatus, response.SharedProfileData.NFStatus)
+	// http request NFProfileRetrieve
+	w = httptest.NewRecorder()
+	request, err = http.NewRequest("GET", url+"/"+sharedDataId, nil)
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, sharedDataId, response.SharedDataId)
+	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
+	assert.Equal(t, nfType, response.SharedProfileData.NFType)
+	assert.Equal(t, nfStatus, response.SharedProfileData.NFStatus)
+}
