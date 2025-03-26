@@ -80,6 +80,8 @@ func TestHandleNFRegisterNormal(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+nfInstanceId, w.Header().Get("Location"))
 	assert.Equal(t, nfInstanceId, response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatus, response.NFStatus)
@@ -125,6 +127,8 @@ func TestHandleNFRegisterNormalWithUpperNFInstanceID(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+nfInstanceId, w.Header().Get("Location"))
 	assert.Equal(t, strings.ToLower(nfInstanceId), response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatus, response.NFStatus)
@@ -168,6 +172,7 @@ func TestHandleNFRegisterAbnormalWithoutNFType(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "application/problem+json", w.Header().Get("Content-Type"))
 	assert.Equal(t, "Bad Request", response.ProblemDetails.Title)
 	assert.Equal(t, "Key: 'NFProfile.NFType' Error:Field validation for 'NFType' failed on the 'required' tag", response.ProblemDetails.Detail)
 }
@@ -212,6 +217,8 @@ func TestHandleNFProfileCompleteReplacement(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+nfInstanceId, w.Header().Get("Location"))
 	assert.Equal(t, nfInstanceId, response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatus, response.NFStatus)
@@ -241,6 +248,7 @@ func TestHandleNFProfileCompleteReplacement(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	assert.Equal(t, nfInstanceId, response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatusNew, response.NFStatus)
@@ -285,6 +293,8 @@ func TestHandleNFProfileRetrieve(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+nfInstanceId, w.Header().Get("Location"))
 	assert.Equal(t, nfInstanceId, response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatus, response.NFStatus)
@@ -302,6 +312,7 @@ func TestHandleNFProfileRetrieve(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	assert.Equal(t, nfInstanceId, response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatus, response.NFStatus)
@@ -352,6 +363,8 @@ func TestHandleNFRegisterSharedDataNormal(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+sharedDataId, w.Header().Get("Location"))
 	assert.Equal(t, sharedDataId, response.SharedDataId)
 	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
 	assert.Equal(t, nfType, response.SharedProfileData.NFType)
@@ -403,6 +416,8 @@ func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+sharedDataId, w.Header().Get("Location"))
 	assert.Equal(t, sharedDataId, response.SharedDataId)
 	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
 	assert.Equal(t, nfType, response.SharedProfileData.NFType)
@@ -437,6 +452,7 @@ func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	assert.Equal(t, sharedDataId, response.SharedDataId)
 	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
 	assert.Equal(t, nfType, response.SharedProfileData.NFType)
@@ -487,6 +503,8 @@ func TestHandleNFSharedDataRetrieve(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+sharedDataId, w.Header().Get("Location"))
 	assert.Equal(t, sharedDataId, response.SharedDataId)
 	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
 	assert.Equal(t, nfType, response.SharedProfileData.NFType)
@@ -505,6 +523,7 @@ func TestHandleNFSharedDataRetrieve(t *testing.T) {
 	}
 	// assert http response
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	assert.Equal(t, sharedDataId, response.SharedDataId)
 	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
 	assert.Equal(t, nfType, response.SharedProfileData.NFType)
