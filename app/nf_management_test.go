@@ -128,7 +128,7 @@ func TestHandleNFRegisterNormalWithUpperNFInstanceID(t *testing.T) {
 	// assert http response
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	assert.Equal(t, url+"/"+nfInstanceId, w.Header().Get("Location"))
+	assert.Equal(t, url+"/"+strings.ToLower(nfInstanceId), w.Header().Get("Location"))
 	assert.Equal(t, strings.ToLower(nfInstanceId), response.NFInstanceId)
 	assert.Equal(t, nfType, response.NFType)
 	assert.Equal(t, nfStatus, response.NFStatus)
