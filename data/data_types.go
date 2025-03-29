@@ -37,3 +37,8 @@ type SharedData struct {
 	SharedProfileData NFProfile `json:"sharedProfileData" yaml:"sharedProfileData" binding:"omitempty"`
 	SharedServiceData NFService `json:"sharedServiceData" yaml:"sharedServiceData" binding:"omitempty"`
 }
+
+type UriList struct {
+	Links          []string `json:"_links" yaml:"_links" binding:"omitempty"`
+	TotalItemCount int      `json:"totalItemCount" yaml:"totalItemCount" binding:"omitempty"`
+}

@@ -112,6 +112,7 @@ func (nrf *NRF) Start() {
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{
+		nfManagement.GET("nf-instances", HandleNFListRetrieve)
 		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
 		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
 		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFSharedDataCompleteReplacement)

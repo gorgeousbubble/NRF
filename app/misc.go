@@ -165,3 +165,25 @@ func fetchListenPort(context *gin.Context) (port string) {
 func formLocation(context *gin.Context, apiName string, apiVersion string, resource string, identity string) (location string) {
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", autodetectHttpProtocol(context), autodetectHttpHost(context), apiName, apiVersion, resource, identity)
 }
+
+func handleNFListRetrieveQuery(request *NFListRetrieveRequest) {
+	// handle Limit
+	L.Debug("Start HandleLimit", request.Limit)
+	if request.Limit == 0 {
+		request.Limit = 1
+	}
+	L.Debug("HandleLimit success:", request.Limit)
+	// handle HandlePageNumber
+	L.Debug("Start HandlePageNumber:", request.PageNumber)
+	if request.PageNumber == 0 {
+		request.PageNumber = 1
+	}
+	L.Debug("HandlePageSize success.")
+	// handle HandlePageSize
+	L.Debug("Start HandlePageSize:", request.PageSize)
+	if request.PageSize == 0 {
+		request.PageSize = 1
+	}
+	L.Debug("HandlePageSize success.")
+	return
+}
