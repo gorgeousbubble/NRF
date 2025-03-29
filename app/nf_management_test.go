@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -240,6 +241,42 @@ func FuzzHandleNFRegister(f *testing.F) {
 		assert.Equal(t, nfType, response.NFType)
 		assert.Equal(t, nfStatus, response.NFStatus)
 	})
+}
+
+func ExampleHandleNFRegister() {
+	// initialize NRF Service
+	NRFService = New()
+	_ = NRFService.Init()
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfType := "AMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	body, _ := json.Marshal(profile)
+	// http request NFRegister
+	w := httptest.NewRecorder()
+	request, _ := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response NFProfile
+	_ = json.Unmarshal(w.Body.Bytes(), &response)
+	// print http response
+	fmt.Println("response status code:", w.Code)
+	fmt.Println("response content-type:", w.Header().Get("Content-Type"))
+	fmt.Println("response location:", w.Header().Get("Location"))
+	fmt.Println("response body:", string(w.Body.Bytes()))
+	fmt.Println("response nfInstanceId:", response.NFInstanceId)
+	fmt.Println("response nfType:", response.NFType)
+	fmt.Println("response nfStatus:", response.NFStatus)
 }
 
 func TestHandleNFRegisterWithUpperNFInstanceID(t *testing.T) {
