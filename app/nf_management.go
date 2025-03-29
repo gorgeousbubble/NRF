@@ -509,3 +509,7 @@ func HandleNFSharedDataRetrieve(context *gin.Context) {
 	context.JSON(http.StatusOK, response)
 	return
 }
+
+func HandleNFListRetrieve(context *gin.Context) {
+	return
+}
