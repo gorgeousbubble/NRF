@@ -378,6 +378,59 @@ func BenchmarkHandleNFRegisterWithUpperNFInstanceID(b *testing.B) {
 	}
 }
 
+func BenchmarkHandleNFRegisterWithUpperNFInstanceIDParallel(b *testing.B) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		b.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			// construct network function request content
+			rand.New(rand.NewSource(time.Now().UnixNano()))
+			url := server.URL + "/nnrf-nfm/v1/nf-instances"
+			nfInstanceId := strings.ToUpper(uuid.New().String())
+			nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+			nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
+			// assemble network function http request
+			profile := NFProfile{
+				NFInstanceId: nfInstanceId,
+				NFType:       nfType,
+				NFStatus:     nfStatus,
+			}
+			body, err := json.Marshal(profile)
+			if err != nil {
+				b.Errorf("Error marshalling profile: %v", err)
+			}
+			// http request NFRegister
+			w := httptest.NewRecorder()
+			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			if err != nil {
+				b.Errorf("Error creating request: %v", err)
+			}
+			request.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, request)
+			var response NFProfile
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			if err != nil {
+				b.Errorf("Error unmarshalling response: %v", err)
+			}
+			// assert http response
+			assert.Equal(b, http.StatusCreated, w.Code)
+			assert.Equal(b, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(b, url+"/"+strings.ToLower(nfInstanceId), w.Header().Get("Location"))
+			assert.Equal(b, strings.ToLower(nfInstanceId), response.NFInstanceId)
+			assert.Equal(b, nfType, response.NFType)
+			assert.Equal(b, nfStatus, response.NFStatus)
+		}
+	})
+}
+
 func TestHandleNFRegisterWithoutNFType(t *testing.T) {
 	// initialize NRF Service
 	NRFService = New()
