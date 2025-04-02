@@ -474,6 +474,53 @@ func TestHandleNFRegisterWithoutNFType(t *testing.T) {
 	assert.Equal(t, "Key: 'NFProfile.NFType' Error:Field validation for 'NFType' failed on the 'required' tag", response.ProblemDetails.Detail)
 }
 
+func BenchmarkHandleNFRegisterWithoutNFType(b *testing.B) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		b.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// construct network function request content
+		rand.New(rand.NewSource(time.Now().UnixNano()))
+		url := server.URL + "/nnrf-nfm/v1/nf-instances"
+		nfInstanceId := strings.ToUpper(uuid.New().String())
+		nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
+		// assemble network function http request
+		profile := NFProfile{
+			NFInstanceId: nfInstanceId,
+			NFStatus:     nfStatus,
+		}
+		body, err := json.Marshal(profile)
+		if err != nil {
+			b.Errorf("Error marshalling profile: %v", err)
+		}
+		// http request NFRegister
+		w := httptest.NewRecorder()
+		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		if err != nil {
+			b.Errorf("Error creating request: %v", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, request)
+		var response NFProfileRegistrationError
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			b.Errorf("Error unmarshalling response: %v", err)
+		}
+		// assert http response
+		assert.Equal(b, http.StatusBadRequest, w.Code)
+		assert.Equal(b, "application/problem+json", w.Header().Get("Content-Type"))
+		assert.Equal(b, "Bad Request", response.ProblemDetails.Title)
+		assert.Equal(b, "Key: 'NFProfile.NFType' Error:Field validation for 'NFType' failed on the 'required' tag", response.ProblemDetails.Detail)
+	}
+}
+
 func TestHandleNFProfileCompleteReplacement(t *testing.T) {
 	// initialize NRF Service
 	NRFService = New()
