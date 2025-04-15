@@ -1255,6 +1255,98 @@ func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
 	assert.Equal(t, nfStatusNew, response.SharedProfileData.NFStatus)
 }
 
+func BenchmarkHandleNFSharedDataCompleteReplacement(b *testing.B) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		b.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// construct network function request content
+		rand.New(rand.NewSource(time.Now().UnixNano()))
+		url := server.URL + "/nnrf-nfm/v1/shared-data"
+		sharedDataId := uuid.New().String()
+		nfInstanceId := uuid.New().String()
+		nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+		nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
+		// assemble network function http request
+		profile := NFProfile{
+			NFInstanceId: nfInstanceId,
+			NFType:       nfType,
+			NFStatus:     nfStatus,
+		}
+		sharedData := SharedData{
+			SharedDataId:      sharedDataId,
+			SharedProfileData: profile,
+		}
+		body, err := json.Marshal(sharedData)
+		if err != nil {
+			b.Errorf("Error marshalling profile: %v", err)
+		}
+		// http request NFRegister
+		w := httptest.NewRecorder()
+		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		if err != nil {
+			b.Errorf("Error creating request: %v", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, request)
+		var response SharedData
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			b.Errorf("Error unmarshalling response: %v", err)
+		}
+		// assert http response
+		assert.Equal(b, http.StatusCreated, w.Code)
+		assert.Equal(b, "application/json", w.Header().Get("Content-Type"))
+		assert.Equal(b, url+"/"+sharedDataId, w.Header().Get("Location"))
+		assert.Equal(b, sharedDataId, response.SharedDataId)
+		assert.Equal(b, nfInstanceId, response.SharedProfileData.NFInstanceId)
+		assert.Equal(b, nfType, response.SharedProfileData.NFType)
+		assert.Equal(b, nfStatus, response.SharedProfileData.NFStatus)
+		// construct network function request content
+		nfStatusNew := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
+		// assemble network function http request
+		profileNew := NFProfile{
+			NFInstanceId: nfInstanceId,
+			NFType:       nfType,
+			NFStatus:     nfStatusNew,
+		}
+		sharedDataNew := SharedData{
+			SharedDataId:      sharedDataId,
+			SharedProfileData: profileNew,
+		}
+		bodyNew, err := json.Marshal(sharedDataNew)
+		if err != nil {
+			b.Errorf("Error marshalling profile: %v", err)
+		}
+		// http request NFProfileCompleteReplacement
+		w = httptest.NewRecorder()
+		request, err = http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(bodyNew))
+		if err != nil {
+			b.Errorf("Error creating request: %v", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, request)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			b.Errorf("Error unmarshalling response: %v", err)
+		}
+		// assert http response
+		assert.Equal(b, http.StatusOK, w.Code)
+		assert.Equal(b, "application/json", w.Header().Get("Content-Type"))
+		assert.Equal(b, sharedDataId, response.SharedDataId)
+		assert.Equal(b, nfInstanceId, response.SharedProfileData.NFInstanceId)
+		assert.Equal(b, nfType, response.SharedProfileData.NFType)
+		assert.Equal(b, nfStatusNew, response.SharedProfileData.NFStatus)
+	}
+}
+
 func TestHandleNFSharedDataRetrieve(t *testing.T) {
 	// initialize NRF Service
 	NRFService = New()
