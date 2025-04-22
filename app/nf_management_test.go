@@ -1860,3 +1860,77 @@ func BenchmarkHandleNFListRetrieveParallel(b *testing.B) {
 		}
 	})
 }
+
+func FuzzHandleNFListRetrieve(f *testing.F) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		f.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfType := "SMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		f.Errorf("Error marshalling profile: %v", err)
+	}
+	// add fuzzy test database
+	f.Add(body)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		// unexpected result
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("panic: %v", r)
+			}
+		}()
+		w := httptest.NewRecorder()
+		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		if err != nil {
+			t.Errorf("Error creating request: %v", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, request)
+		var response NFProfile
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			t.Errorf("Error unmarshalling response: %v", err)
+		}
+		// assert http response
+		assert.Equal(t, http.StatusCreated, w.Code)
+		assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+		assert.Equal(t, url+"/"+nfInstanceId, w.Header().Get("Location"))
+		assert.Equal(t, nfInstanceId, response.NFInstanceId)
+		assert.Equal(t, nfType, response.NFType)
+		assert.Equal(t, nfStatus, response.NFStatus)
+		// http request NFListRetrieve
+		w = httptest.NewRecorder()
+		request, err = http.NewRequest("GET", url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
+		if err != nil {
+			t.Errorf("Error creating request: %v", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, request)
+		var responseNew UriList
+		err = json.Unmarshal(w.Body.Bytes(), &responseNew)
+		if err != nil {
+			t.Errorf("Error unmarshalling response: %v", err)
+		}
+		// assert http response
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "application/3gppHal+json", w.Header().Get("Content-Type"))
+		assert.Equal(t, url+"/"+nfInstanceId, responseNew.Links[0])
+		assert.Equal(t, 1, responseNew.TotalItemCount)
+	})
+}
