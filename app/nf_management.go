@@ -268,6 +268,112 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	return
 }
 
+func HandleNFDeregister(context *gin.Context) {
+	// record context in logs
+	L.Info("NFDeregister request:", context.Request)
+	// extract nfInstanceId from request uri
+	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
+	fmt.Println("nfInstanceId:", nfInstanceId)
+	// search and delete instance from database
+	exists := func(instance string) bool {
+		NRFService.mutex.Lock()
+		defer NRFService.mutex.Unlock()
+		// search the specific instance in database
+		exists := false
+		for k, v := range NRFService.instances {
+			for i, j := range v {
+				if j.NFInstanceId == nfInstanceId {
+					NRFService.instances[k] = append(NRFService.instances[k][:i], NRFService.instances[k][i+1:]...)
+					exists = true
+					break
+				}
+			}
+		}
+		return exists
+	}(nfInstanceId)
+	// return 404 Not Found
+	if !exists {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Not Found"
+		problemDetails.Status = http.StatusNotFound
+		problemDetails.Detail = errors.New("NFInstanceId not found").Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusNotFound, problemDetails)
+		L.Error("NFDeregister request NFInstance not found in database.")
+		return
+	}
+	// return 204 No Content
+	context.Status(http.StatusNoContent)
+}
+
+func HandleNFListRetrieve(context *gin.Context) {
+	var request NFListRetrieveRequest
+	// record context in logs
+	L.Info("NFListRetrieve request:", context.Request)
+	// check request body bind json
+	L.Debug("Start bind NFListRetrieve request body to json:", context.Request.Body)
+	err := context.ShouldBindQuery(&request)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Bad Request"
+		problemDetails.Status = http.StatusBadRequest
+		problemDetails.Detail = err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusBadRequest, problemDetails)
+		L.Error("NFListRetrieve request body bind json failed:", err)
+		return
+	}
+	// handle query parameters
+	handleNFListRetrieveQuery(&request)
+	// get instances in NRF Service database
+	response, err := func(request NFListRetrieveRequest) (uriList UriList, err error) {
+		NRFService.mutex.RLock()
+		defer NRFService.mutex.RUnlock()
+		// get instances according to nfType
+		if request.NFType != "" {
+			// search specific nfType
+			for k, v := range NRFService.instances {
+				if k == request.NFType {
+					// start and end points in slices
+					start := (request.PageNumber - 1) * request.PageSize
+					end := request.PageNumber + request.PageSize
+					// check validation of slices
+					if start >= len(v) {
+						err = errors.New("NFListRetrieveRequest start index out of bounds")
+						return
+					}
+					if end > len(v) {
+						end = len(v)
+					}
+					if (end - start) > request.Limit {
+						end = start + request.Limit
+					}
+					// retrieve NFs uri list
+					uriList.TotalItemCount = end - start
+					for _, j := range v[start:end] {
+						uriList.Links = append(uriList.Links, formLocation(context, "nnrf-nfm", "v1", "nf-instances", j.NFInstanceId))
+					}
+					break
+				}
+			}
+		}
+		return uriList, err
+	}(request)
+	if err != nil {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Not Found"
+		problemDetails.Status = http.StatusNotFound
+		problemDetails.Detail = errors.New("UriList not found").Error() + ":" + err.Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusNotFound, problemDetails)
+		L.Error("NFListRetrieve request query UriList not found:", err)
+	}
+	// return success response
+	context.Header("Content-Type", "application/3gppHal+json")
+	context.JSON(http.StatusOK, response)
+	return
+}
+
 func HandleNFRegisterOrNFSharedDataCompleteReplacement(context *gin.Context) {
 	// check allowedSharedData feature enable
 	if !NRFConfigure.AllowedSharedData {
@@ -513,74 +619,6 @@ func HandleNFSharedDataRetrieve(context *gin.Context) {
 	// return success response
 	context.Header("Content-Type", "application/json")
 	context.Header("Cache-Control", "no-cache")
-	context.JSON(http.StatusOK, response)
-	return
-}
-
-func HandleNFListRetrieve(context *gin.Context) {
-	var request NFListRetrieveRequest
-	// record context in logs
-	L.Info("NFListRetrieve request:", context.Request)
-	// check request body bind json
-	L.Debug("Start bind NFListRetrieve request body to json:", context.Request.Body)
-	err := context.ShouldBindQuery(&request)
-	if err != nil {
-		var problemDetails ProblemDetails
-		problemDetails.Title = "Bad Request"
-		problemDetails.Status = http.StatusBadRequest
-		problemDetails.Detail = err.Error()
-		context.Header("Content-Type", "application/problem+json")
-		context.JSON(http.StatusBadRequest, problemDetails)
-		L.Error("NFListRetrieve request body bind json failed:", err)
-		return
-	}
-	// handle query parameters
-	handleNFListRetrieveQuery(&request)
-	// get instances in NRF Service database
-	response, err := func(request NFListRetrieveRequest) (uriList UriList, err error) {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
-		// get instances according to nfType
-		if request.NFType != "" {
-			// search specific nfType
-			for k, v := range NRFService.instances {
-				if k == request.NFType {
-					// start and end points in slices
-					start := (request.PageNumber - 1) * request.PageSize
-					end := request.PageNumber + request.PageSize
-					// check validation of slices
-					if start >= len(v) {
-						err = errors.New("NFListRetrieveRequest start index out of bounds")
-						return
-					}
-					if end > len(v) {
-						end = len(v)
-					}
-					if (end - start) > request.Limit {
-						end = start + request.Limit
-					}
-					// retrieve NFs uri list
-					uriList.TotalItemCount = end - start
-					for _, j := range v[start:end] {
-						uriList.Links = append(uriList.Links, formLocation(context, "nnrf-nfm", "v1", "nf-instances", j.NFInstanceId))
-					}
-					break
-				}
-			}
-		}
-		return uriList, err
-	}(request)
-	if err != nil {
-		var problemDetails ProblemDetails
-		problemDetails.Title = "Not Found"
-		problemDetails.Status = http.StatusNotFound
-		problemDetails.Detail = errors.New("UriList not found").Error() + ":" + err.Error()
-		context.Header("Content-Type", "application/problem+json")
-		context.JSON(http.StatusNotFound, problemDetails)
-		L.Error("NFListRetrieve request query UriList not found:", err)
-	}
-	// return success response
-	context.Header("Content-Type", "application/3gppHal+json")
 	context.JSON(http.StatusOK, response)
 	return
 }

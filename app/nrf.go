@@ -115,6 +115,7 @@ func (nrf *NRF) Start() {
 		nfManagement.GET("nf-instances", HandleNFListRetrieve)
 		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
 		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
+		nfManagement.DELETE("nf-instances/:nfInstanceID", HandleNFDeregister)
 		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFSharedDataCompleteReplacement)
 		nfManagement.GET("shared-data/:sharedDataId", HandleNFSharedDataRetrieve)
 	}
