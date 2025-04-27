@@ -118,6 +118,7 @@ func (nrf *NRF) Start() {
 		nfManagement.DELETE("nf-instances/:nfInstanceID", HandleNFDeregister)
 		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFSharedDataCompleteReplacement)
 		nfManagement.GET("shared-data/:sharedDataId", HandleNFSharedDataRetrieve)
+		nfManagement.DELETE("shared-data/:sharedDataId", HandleNFDeregisterSharedData)
 	}
 	// start NRF services
 	if tlsSettings == "non-tls" {

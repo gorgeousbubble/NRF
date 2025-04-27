@@ -275,7 +275,7 @@ func HandleNFDeregister(context *gin.Context) {
 	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
 	fmt.Println("nfInstanceId:", nfInstanceId)
 	// search and delete instance from database
-	exists := func(instance string) bool {
+	exists := func(nfInstanceId string) bool {
 		NRFService.mutex.Lock()
 		defer NRFService.mutex.Unlock()
 		// search the specific instance in database
@@ -299,7 +299,7 @@ func HandleNFDeregister(context *gin.Context) {
 		problemDetails.Detail = errors.New("NFInstanceId not found").Error()
 		context.Header("Content-Type", "application/problem+json")
 		context.JSON(http.StatusNotFound, problemDetails)
-		L.Error("NFDeregister request NFInstance not found in database.")
+		L.Error("NFDeregister request NFInstanceId not found in database.")
 		return
 	}
 	// return 204 No Content
@@ -621,4 +621,42 @@ func HandleNFSharedDataRetrieve(context *gin.Context) {
 	context.Header("Cache-Control", "no-cache")
 	context.JSON(http.StatusOK, response)
 	return
+}
+
+func HandleNFDeregisterSharedData(context *gin.Context) {
+	// record context in logs
+	L.Info("NFDeregister (SharedData) request:", context.Request)
+	// extract sharedDataId from request uri
+	sharedDataId := strings.ToLower(context.Param("sharedDataId"))
+	fmt.Println("sharedDataId:", sharedDataId)
+	// search and delete instance from database
+	exists := func(sharedDataId string) bool {
+		NRFService.mutex.Lock()
+		defer NRFService.mutex.Unlock()
+		// search the specific instance in database
+		exists := false
+		for k, v := range NRFService.repositories {
+			for i, j := range v {
+				if j.SharedDataId == sharedDataId {
+					NRFService.repositories[k] = append(NRFService.repositories[k][:i], NRFService.repositories[k][i+1:]...)
+					exists = true
+					break
+				}
+			}
+		}
+		return exists
+	}(sharedDataId)
+	// return 404 Not Found
+	if !exists {
+		var problemDetails ProblemDetails
+		problemDetails.Title = "Not Found"
+		problemDetails.Status = http.StatusNotFound
+		problemDetails.Detail = errors.New("SharedDataId not found").Error()
+		context.Header("Content-Type", "application/problem+json")
+		context.JSON(http.StatusNotFound, problemDetails)
+		L.Error("NFDeregister (SharedData) request SharedDataId not found in database.")
+		return
+	}
+	// return 204 No Content
+	context.Status(http.StatusNoContent)
 }
