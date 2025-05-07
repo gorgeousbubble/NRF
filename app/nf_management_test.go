@@ -570,6 +570,59 @@ func BenchmarkHandleNFRegisterWithoutNFTypeParallel(b *testing.B) {
 	})
 }
 
+func FuzzHandleNFRegisterWithoutNFType(f *testing.F) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		f.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		f.Errorf("Error marshalling profile: %v", err)
+	}
+	// add fuzzy test database
+	f.Add(body)
+	f.Fuzz(func(t *testing.T, body []byte) {
+		// unexpected result
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("panic: %v", r)
+			}
+		}()
+		// http request NFRegister
+		w := httptest.NewRecorder()
+		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		if err != nil {
+			t.Errorf("Error creating request: %v", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, request)
+		var response NFProfileRegistrationError
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			t.Errorf("Error unmarshalling response: %v", err)
+		}
+		// assert http response
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, "application/problem+json", w.Header().Get("Content-Type"))
+		assert.Equal(t, "Bad Request", response.ProblemDetails.Title)
+		assert.Equal(t, "Key: 'NFProfile.NFType' Error:Field validation for 'NFType' failed on the 'required' tag", response.ProblemDetails.Detail)
+	})
+}
+
 func TestHandleNFProfileCompleteReplacement(t *testing.T) {
 	// initialize NRF Service
 	NRFService = New()
