@@ -33,8 +33,10 @@ func setupTestRouter() *gin.Engine {
 		nfManagement.GET("nf-instances", HandleNFListRetrieve)
 		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
 		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
+		nfManagement.DELETE("nf-instances/:nfInstanceID", HandleNFDeregister)
 		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFSharedDataCompleteReplacement)
 		nfManagement.GET("shared-data/:sharedDataId", HandleNFSharedDataRetrieve)
+		nfManagement.DELETE("shared-data/:sharedDataId", HandleNFDeregisterSharedData)
 	}
 	return router
 }
@@ -2446,4 +2448,60 @@ func FuzzHandleNFListRetrieve(f *testing.F) {
 		assert.Equal(t, url+"/"+nfInstanceId, responseNew.Links[0])
 		assert.Equal(t, 1, responseNew.TotalItemCount)
 	})
+}
+
+func TestHandleNFDeregister(t *testing.T) {
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	nfType := "AMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Errorf("Error marshalling profile: %v", err)
+	}
+	// http request NFRegister
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response NFProfile
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+nfInstanceId, w.Header().Get("Location"))
+	assert.Equal(t, nfInstanceId, response.NFInstanceId)
+	assert.Equal(t, nfType, response.NFType)
+	assert.Equal(t, nfStatus, response.NFStatus)
+	// http request NFDeregister
+	w = httptest.NewRecorder()
+	request, err = http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	router.ServeHTTP(w, request)
+	// assert http response
+	assert.Equal(t, http.StatusNoContent, w.Code)
 }
