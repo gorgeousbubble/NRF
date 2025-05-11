@@ -2994,3 +2994,35 @@ func FuzzHandleNFDeregisterSharedData(f *testing.F) {
 		assert.Equal(t, http.StatusNoContent, w.Code)
 	})
 }
+
+func TestHandleNFDeregisterSharedData2(t *testing.T) {
+	/*-----------------------------------------------------------------------
+	// Test Case: TestHandleNFDeregisterSharedData2
+	// Test Purpose: Test HandleNFDeregisterSharedData with an unregistered SharedData
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFDeregisterSharedData request to NRF
+	// 3. receive 404 Not Found from NRF
+	-------------------------------------------------------------------------*/
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/shared-data"
+	sharedDataId := uuid.New().String()
+	// http request NFDeregisterSharedData
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	router.ServeHTTP(w, request)
+	// assert http response
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
