@@ -1516,6 +1516,43 @@ func FuzzHandleNFDeregister(f *testing.F) {
 	})
 }
 
+func TestHandleNFDeregister2(t *testing.T) {
+	/*-----------------------------------------------------------------------
+	// Test Case: TestHandleNFDeregister2
+	// Test Purpose: Test HandleNFDeregister with an unregistered NFInstance
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFDeregister request to NRF
+	// 3. receive 404 Not Found from NRF
+	-------------------------------------------------------------------------*/
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/nf-instances"
+	nfInstanceId := uuid.New().String()
+	// http request NFDeregister
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	router.ServeHTTP(w, request)
+	var response NFProfile
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
 func TestHandleNFRegisterSharedData(t *testing.T) {
 	// initialize NRF Service
 	NRFService = New()
