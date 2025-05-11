@@ -283,7 +283,12 @@ func HandleNFDeregister(context *gin.Context) {
 		for k, v := range NRFService.instances {
 			for i, j := range v {
 				if j.NFInstanceId == nfInstanceId {
+					// delete NFInstance from database
 					NRFService.instances[k] = append(NRFService.instances[k][:i], NRFService.instances[k][i+1:]...)
+					// remove NFType slice when all NFInstance deleted
+					if len(NRFService.instances[k]) == 0 {
+						delete(NRFService.instances, k)
+					}
 					exists = true
 					break
 				}
@@ -638,7 +643,12 @@ func HandleNFDeregisterSharedData(context *gin.Context) {
 		for k, v := range NRFService.repositories {
 			for i, j := range v {
 				if j.SharedDataId == sharedDataId {
+					// delete SharedData from database
 					NRFService.repositories[k] = append(NRFService.repositories[k][:i], NRFService.repositories[k][i+1:]...)
+					// remove SharedDataId slice when all SharedData deleted
+					if len(NRFService.repositories[k]) == 0 {
+						delete(NRFService.repositories, k)
+					}
 					exists = true
 					break
 				}
