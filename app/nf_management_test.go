@@ -1553,9 +1553,9 @@ func TestHandleNFDeregister2(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func BenchmarkHandleNFRegister2(b *testing.B) {
+func BenchmarkHandleNFDeregister2(b *testing.B) {
 	/*-----------------------------------------------------------------------
-	// Test Case: BenchmarkHandleNFRegister2
+	// Test Case: BenchmarkHandleNFDeregister2
 	// Test Purpose: Benchmark HandleNFDeregister with an unregistered NFInstance
 	// Test Steps:
 	// 1. random generate an uuid
@@ -1591,6 +1591,48 @@ func BenchmarkHandleNFRegister2(b *testing.B) {
 		// assert http response
 		assert.Equal(b, http.StatusNotFound, w.Code)
 	}
+}
+
+func BenchmarkHandleNFDeregisterParallel2(b *testing.B) {
+	/*-----------------------------------------------------------------------
+	// Test Case: BenchmarkHandleNFDeregisterParallel2
+	// Test Purpose: Benchmark HandleNFDeregister with an unregistered NFInstance (Parallel)
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFDeregister request to NRF
+	// 3. receive 404 Not Found from NRF
+	-------------------------------------------------------------------------*/
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		b.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			// construct network function request content
+			url := server.URL + "/nnrf-nfm/v1/nf-instances"
+			nfInstanceId := uuid.New().String()
+			// http request NFDeregister
+			w := httptest.NewRecorder()
+			request, err := http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+			if err != nil {
+				b.Errorf("Error creating request: %v", err)
+			}
+			router.ServeHTTP(w, request)
+			var response NFProfile
+			err = json.Unmarshal(w.Body.Bytes(), &response)
+			if err != nil {
+				b.Errorf("Error unmarshalling response: %v", err)
+			}
+			// assert http response
+			assert.Equal(b, http.StatusNotFound, w.Code)
+		}
+	})
 }
 
 func TestHandleNFRegisterSharedData(t *testing.T) {
@@ -3103,9 +3145,9 @@ func BenchmarkHandleNFDeregisterSharedData2(b *testing.B) {
 	}
 }
 
-func BenchmarkHandleNFDeregisterSharedData2Parallel(b *testing.B) {
+func BenchmarkHandleNFDeregisterSharedDataParallel2(b *testing.B) {
 	/*-----------------------------------------------------------------------
-	// Test Case: BenchmarkHandleNFDeregisterSharedData2Parallel
+	// Test Case: BenchmarkHandleNFDeregisterSharedDataParallel2
 	// Test Purpose: Benchmark HandleNFDeregisterSharedData with an unregistered SharedData (Parallel)
 	// Test Steps:
 	// 1. random generate an uuid
