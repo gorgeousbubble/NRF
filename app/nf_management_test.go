@@ -3062,3 +3062,41 @@ func BenchmarkHandleNFDeregisterSharedData2(b *testing.B) {
 		assert.Equal(b, http.StatusNotFound, w.Code)
 	}
 }
+
+func BenchmarkHandleNFDeregisterSharedData2Parallel(b *testing.B) {
+	/*-----------------------------------------------------------------------
+	// Test Case: BenchmarkHandleNFDeregisterSharedData2Parallel
+	// Test Purpose: Benchmark HandleNFDeregisterSharedData with an unregistered SharedData (Parallel)
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFDeregisterSharedData request to NRF
+	// 3. receive 404 Not Found from NRF
+	-------------------------------------------------------------------------*/
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		b.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// reset timer
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			// construct network function request content
+			url := server.URL + "/nnrf-nfm/v1/shared-data"
+			sharedDataId := uuid.New().String()
+			// http request NFDeregisterSharedData
+			w := httptest.NewRecorder()
+			request, err := http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+			if err != nil {
+				b.Errorf("Error creating request: %v", err)
+			}
+			router.ServeHTTP(w, request)
+			// assert http response
+			assert.Equal(b, http.StatusNotFound, w.Code)
+		}
+	})
+}
