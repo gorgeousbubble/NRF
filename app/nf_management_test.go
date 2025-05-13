@@ -3249,3 +3249,76 @@ func BenchmarkHandleNFDeregisterSharedDataParallel2(b *testing.B) {
 		}
 	})
 }
+
+func TestHandleNFDeregisterSharedData3(t *testing.T) {
+	/*-----------------------------------------------------------------------
+	// Test Case: TestHandleNFDeregisterSharedData3
+	// Test Purpose: Test HandleNFDeregisterSharedData with a registered
+	//               SharedData but deregister with another SharedData
+	// Test Steps:
+	// 1. send NFRegisterSharedData request to NRF register a SharedData
+	// 2. send NFDeregisterSharedData request to NRF deregister another
+	//    SharedData which not existed
+	// 3. receive 404 Not Found from NRF
+	-------------------------------------------------------------------------*/
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	// construct network function request content
+	url := server.URL + "/nnrf-nfm/v1/shared-data"
+	sharedDataId := uuid.New().String()
+	nfInstanceId := uuid.New().String()
+	nfType := "AMF"
+	nfStatus := "REGISTERED"
+	// assemble network function http request
+	profile := NFProfile{
+		NFInstanceId: nfInstanceId,
+		NFType:       nfType,
+		NFStatus:     nfStatus,
+	}
+	sharedData := SharedData{
+		SharedDataId:      sharedDataId,
+		SharedProfileData: profile,
+	}
+	body, err := json.Marshal(sharedData)
+	if err != nil {
+		t.Errorf("Error marshalling shared data: %v", err)
+	}
+	// http request NFRegister
+	w := httptest.NewRecorder()
+	request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, request)
+	var response SharedData
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("Error unmarshalling response: %v", err)
+	}
+	// assert http response
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, url+"/"+sharedDataId, w.Header().Get("Location"))
+	assert.Equal(t, sharedDataId, response.SharedDataId)
+	assert.Equal(t, nfInstanceId, response.SharedProfileData.NFInstanceId)
+	assert.Equal(t, nfType, response.SharedProfileData.NFType)
+	assert.Equal(t, nfStatus, response.SharedProfileData.NFStatus)
+	// http request NFDeregister
+	sharedDataIdNew := uuid.New().String()
+	w = httptest.NewRecorder()
+	request, err = http.NewRequest("DELETE", url+"/"+sharedDataIdNew, nil)
+	if err != nil {
+		t.Errorf("Error creating request: %v", err)
+	}
+	router.ServeHTTP(w, request)
+	// assert http response
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
