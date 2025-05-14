@@ -1702,6 +1702,76 @@ func TestHandleNFDeregister3(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
+func BenchmarkHandleNFDeregister3(b *testing.B) {
+	/*-----------------------------------------------------------------------
+	// Test Case: BenchmarkHandleNFDeregister3
+	// Test Purpose: Benchmark HandleNFDeregister with a registered NFInstance but
+	//               deregister with another NFInstance
+	// Test Steps:
+	// 1. send NFRegister request to NRF register a NFInstance
+	// 2. send NFDeregister request to NRF deregister another NFInstance
+	//    which not existed
+	// 3. receive 404 Not Found from NRF
+	-------------------------------------------------------------------------*/
+	// initialize NRF Service
+	NRFService = New()
+	err := NRFService.Init()
+	if err != nil {
+		b.Error(err)
+	}
+	// start http test service
+	server, router := startTestServer()
+	defer server.Close()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// construct network function request content
+		url := server.URL + "/nnrf-nfm/v1/nf-instances"
+		nfInstanceId := uuid.New().String()
+		nfType := "AMF"
+		nfStatus := "REGISTERED"
+		// assemble network function http request
+		profile := NFProfile{
+			NFInstanceId: nfInstanceId,
+			NFType:       nfType,
+			NFStatus:     nfStatus,
+		}
+		body, err := json.Marshal(profile)
+		if err != nil {
+			b.Errorf("Error marshalling profile: %v", err)
+		}
+		// http request NFRegister
+		w := httptest.NewRecorder()
+		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		if err != nil {
+			b.Errorf("Error creating request: %v", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, request)
+		var response NFProfile
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			b.Errorf("Error unmarshalling response: %v", err)
+		}
+		// assert http response
+		assert.Equal(b, http.StatusCreated, w.Code)
+		assert.Equal(b, "application/json", w.Header().Get("Content-Type"))
+		assert.Equal(b, url+"/"+nfInstanceId, w.Header().Get("Location"))
+		assert.Equal(b, nfInstanceId, response.NFInstanceId)
+		assert.Equal(b, nfType, response.NFType)
+		assert.Equal(b, nfStatus, response.NFStatus)
+		// http request NFDeregister
+		nfInstanceIdNew := uuid.New().String()
+		w = httptest.NewRecorder()
+		request, err = http.NewRequest("DELETE", url+"/"+nfInstanceIdNew, nil)
+		if err != nil {
+			b.Errorf("Error creating request: %v", err)
+		}
+		router.ServeHTTP(w, request)
+		// assert http response
+		assert.Equal(b, http.StatusNotFound, w.Code)
+	}
+}
+
 func TestHandleNFRegisterSharedData(t *testing.T) {
 	// initialize NRF Service
 	NRFService = New()
