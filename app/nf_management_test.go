@@ -1363,8 +1363,8 @@ func BenchmarkHandleNFDeregister(b *testing.B) {
 		// construct network function request content
 		url := server.URL + "/nnrf-nfm/v1/nf-instances"
 		nfInstanceId := uuid.New().String()
-		nfType := "AMF"
-		nfStatus := "REGISTERED"
+		nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+		nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
 		// assemble network function http request
 		profile := NFProfile{
 			NFInstanceId: nfInstanceId,
@@ -1432,8 +1432,8 @@ func BenchmarkHandleNFDeregisterParallel(b *testing.B) {
 			// construct network function request content
 			url := server.URL + "/nnrf-nfm/v1/nf-instances"
 			nfInstanceId := uuid.New().String()
-			nfType := "AMF"
-			nfStatus := "REGISTERED"
+			nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+			nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
 			// assemble network function http request
 			profile := NFProfile{
 				NFInstanceId: nfInstanceId,
@@ -1478,6 +1478,15 @@ func BenchmarkHandleNFDeregisterParallel(b *testing.B) {
 }
 
 func FuzzHandleNFDeregister(f *testing.F) {
+	/*-----------------------------------------------------------------------
+	// Test Case: FuzzHandleNFDeregister
+	// Test Purpose: Fuzzy HandleNFDeregister with a registered NFInstance
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegister request to NRF by using generated uuid as NFInstanceId
+	// 3. send NFDeregister request to NRF by using the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
@@ -1490,8 +1499,8 @@ func FuzzHandleNFDeregister(f *testing.F) {
 	// construct network function request content
 	url := server.URL + "/nnrf-nfm/v1/nf-instances"
 	nfInstanceId := uuid.New().String()
-	nfType := "AMF"
-	nfStatus := "REGISTERED"
+	nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+	nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
 	// assemble network function http request
 	profile := NFProfile{
 		NFInstanceId: nfInstanceId,
