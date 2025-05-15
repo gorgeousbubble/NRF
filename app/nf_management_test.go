@@ -3152,8 +3152,8 @@ func BenchmarkHandleNFDeregisterSharedData(b *testing.B) {
 		url := server.URL + "/nnrf-nfm/v1/shared-data"
 		sharedDataId := uuid.New().String()
 		nfInstanceId := uuid.New().String()
-		nfType := "AMF"
-		nfStatus := "REGISTERED"
+		nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+		nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
 		// assemble network function http request
 		profile := NFProfile{
 			NFInstanceId: nfInstanceId,
@@ -3227,8 +3227,8 @@ func BenchmarkHandleNFDeregisterSharedDataParallel(b *testing.B) {
 			url := server.URL + "/nnrf-nfm/v1/shared-data"
 			sharedDataId := uuid.New().String()
 			nfInstanceId := uuid.New().String()
-			nfType := "AMF"
-			nfStatus := "REGISTERED"
+			nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+			nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
 			// assemble network function http request
 			profile := NFProfile{
 				NFInstanceId: nfInstanceId,
@@ -3300,8 +3300,8 @@ func FuzzHandleNFDeregisterSharedData(f *testing.F) {
 	url := server.URL + "/nnrf-nfm/v1/shared-data"
 	sharedDataId := uuid.New().String()
 	nfInstanceId := uuid.New().String()
-	nfType := "AMF"
-	nfStatus := "REGISTERED"
+	nfType := NetworkFunctionType[rand.Intn(len(NetworkFunctionType))]
+	nfStatus := NetworkFunctionStatus[rand.Intn(len(NetworkFunctionStatus))]
 	// assemble network function http request
 	profile := NFProfile{
 		NFInstanceId: nfInstanceId,
