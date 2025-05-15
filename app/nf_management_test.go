@@ -3057,6 +3057,15 @@ func FuzzHandleNFListRetrieve(f *testing.F) {
 }
 
 func TestHandleNFDeregisterSharedData(t *testing.T) {
+	/*-----------------------------------------------------------------------
+	// Test Case: TestHandleNFDeregisterSharedData
+	// Test Purpose: Test HandleNFDeregisterSharedData with a registered SharedData
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegisterSharedData request to NRF with random generated uuid
+	// 3. send NFDeregisterSharedData request to NRF with the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
@@ -3119,6 +3128,15 @@ func TestHandleNFDeregisterSharedData(t *testing.T) {
 }
 
 func BenchmarkHandleNFDeregisterSharedData(b *testing.B) {
+	/*-----------------------------------------------------------------------
+	// Test Case: BenchmarkHandleNFDeregisterSharedData
+	// Test Purpose: Benchmark HandleNFDeregisterSharedData with a registered SharedData
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegisterSharedData request to NRF with random generated uuid
+	// 3. send NFDeregisterSharedData request to NRF with the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
@@ -3184,6 +3202,15 @@ func BenchmarkHandleNFDeregisterSharedData(b *testing.B) {
 }
 
 func BenchmarkHandleNFDeregisterSharedDataParallel(b *testing.B) {
+	/*-----------------------------------------------------------------------
+	// Test Case: BenchmarkHandleNFDeregisterSharedDataParallel
+	// Test Purpose: Benchmark HandleNFDeregisterSharedData with a registered SharedData (Parallel)
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegisterSharedData request to NRF with random generated uuid
+	// 3. send NFDeregisterSharedData request to NRF with the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
@@ -3251,6 +3278,15 @@ func BenchmarkHandleNFDeregisterSharedDataParallel(b *testing.B) {
 }
 
 func FuzzHandleNFDeregisterSharedData(f *testing.F) {
+	/*-----------------------------------------------------------------------
+	// Test Case: FuzzHandleNFDeregisterSharedData
+	// Test Purpose: Fuzzy HandleNFDeregisterSharedData with a registered SharedData
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegisterSharedData request to NRF with random generated uuid
+	// 3. send NFDeregisterSharedData request to NRF with the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
