@@ -1275,6 +1275,15 @@ func FuzzHandleNFProfileRetrieve(f *testing.F) {
 }
 
 func TestHandleNFDeregister(t *testing.T) {
+	/*-----------------------------------------------------------------------
+	// Test Case: TestHandleNFDeregister
+	// Test Purpose: Test HandleNFDeregister with a registered NFInstance
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegister request to NRF by using generated uuid as NFInstanceId
+	// 3. send NFDeregister request to NRF by using the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
@@ -1331,6 +1340,15 @@ func TestHandleNFDeregister(t *testing.T) {
 }
 
 func BenchmarkHandleNFDeregister(b *testing.B) {
+	/*-----------------------------------------------------------------------
+	// Test Case: BenchmarkHandleNFDeregister
+	// Test Purpose: Benchmark HandleNFDeregister with a registered NFInstance
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegister request to NRF by using generated uuid as NFInstanceId
+	// 3. send NFDeregister request to NRF by using the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
@@ -1390,6 +1408,15 @@ func BenchmarkHandleNFDeregister(b *testing.B) {
 }
 
 func BenchmarkHandleNFDeregisterParallel(b *testing.B) {
+	/*-----------------------------------------------------------------------
+	// Test Case: BenchmarkHandleNFDeregisterParallel
+	// Test Purpose: Benchmark HandleNFDeregister with a registered NFInstance (Parallel)
+	// Test Steps:
+	// 1. random generate an uuid
+	// 2. send NFRegister request to NRF by using generated uuid as NFInstanceId
+	// 3. send NFDeregister request to NRF by using the same uuid
+	// 4. receive 204 No Content from NRF
+	-------------------------------------------------------------------------*/
 	// initialize NRF Service
 	NRFService = New()
 	err := NRFService.Init()
