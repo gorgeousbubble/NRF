@@ -73,7 +73,7 @@ func TestHandleNFRegister(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -124,7 +124,7 @@ func BenchmarkHandleNFRegister(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -177,7 +177,7 @@ func BenchmarkHandleNFRegisterParallel(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -225,7 +225,7 @@ func FuzzHandleNFRegister(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(data))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(data))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -267,7 +267,7 @@ func ExampleHandleNFRegister() {
 	body, _ := json.Marshal(profile)
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, _ := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, _ := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, request)
 	var response NFProfile
@@ -309,7 +309,7 @@ func TestHandleNFRegisterWithUpperNFInstanceID(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -359,7 +359,7 @@ func BenchmarkHandleNFRegisterWithUpperNFInstanceID(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -411,7 +411,7 @@ func BenchmarkHandleNFRegisterWithUpperNFInstanceIDParallel(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -469,7 +469,7 @@ func FuzzHandleNFRegisterWithUpperNFInstanceID(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -515,7 +515,7 @@ func TestHandleNFRegisterWithoutNFType(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -561,7 +561,7 @@ func BenchmarkHandleNFRegisterWithoutNFType(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -609,7 +609,7 @@ func BenchmarkHandleNFRegisterWithoutNFTypeParallel(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -663,7 +663,7 @@ func FuzzHandleNFRegisterWithoutNFType(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -709,7 +709,7 @@ func TestHandleNFProfileCompleteReplacement(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -741,7 +741,7 @@ func TestHandleNFProfileCompleteReplacement(t *testing.T) {
 	}
 	// http request NFProfileCompleteReplacement
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
+	request, err = http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -789,7 +789,7 @@ func BenchmarkHandleNFProfileCompleteReplacement(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -821,7 +821,7 @@ func BenchmarkHandleNFProfileCompleteReplacement(b *testing.B) {
 		}
 		// http request NFProfileCompleteReplacement
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
+		request, err = http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -871,7 +871,7 @@ func BenchmarkHandleNFProfileCompleteReplacementParallel(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -903,7 +903,7 @@ func BenchmarkHandleNFProfileCompleteReplacementParallel(b *testing.B) {
 			}
 			// http request NFProfileCompleteReplacement
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
+			request, err = http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -959,7 +959,7 @@ func FuzzHandleNFProfileCompleteReplacement(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -991,7 +991,7 @@ func FuzzHandleNFProfileCompleteReplacement(f *testing.F) {
 		}
 		// http request NFProfileCompleteReplacement
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
+		request, err = http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(bodyNew))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -1036,7 +1036,7 @@ func TestHandleNFProfileRetrieve(t *testing.T) {
 		t.Errorf("Error marshalling profile: %v", err)
 	}
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1056,7 +1056,7 @@ func TestHandleNFProfileRetrieve(t *testing.T) {
 	assert.Equal(t, nfStatus, response.NFStatus)
 	// http request NFProfileRetrieve
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("GET", url+"/"+nfInstanceId, nil)
+	request, err = http.NewRequest(http.MethodGet, url+"/"+nfInstanceId, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1103,7 +1103,7 @@ func BenchmarkHandleNFProfileRetrieve(b *testing.B) {
 			b.Errorf("Error marshalling profile: %v", err)
 		}
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -1123,7 +1123,7 @@ func BenchmarkHandleNFProfileRetrieve(b *testing.B) {
 		assert.Equal(b, nfStatus, response.NFStatus)
 		// http request NFProfileRetrieve
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("GET", url+"/"+nfInstanceId, nil)
+		request, err = http.NewRequest(http.MethodGet, url+"/"+nfInstanceId, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -1172,7 +1172,7 @@ func BenchmarkHandleNFProfileRetrieveParallel(b *testing.B) {
 				b.Errorf("Error marshalling profile: %v", err)
 			}
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -1192,7 +1192,7 @@ func BenchmarkHandleNFProfileRetrieveParallel(b *testing.B) {
 			assert.Equal(b, nfStatus, response.NFStatus)
 			// http request NFProfileRetrieve
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("GET", url+"/"+nfInstanceId, nil)
+			request, err = http.NewRequest(http.MethodGet, url+"/"+nfInstanceId, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -1235,7 +1235,7 @@ func FuzzHandleNFProfileRetrieve(f *testing.F) {
 			}
 		}()
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -1255,7 +1255,7 @@ func FuzzHandleNFProfileRetrieve(f *testing.F) {
 		assert.Equal(t, nfStatus, response.NFStatus)
 		// http request NFProfileRetrieve
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("GET", url+"/"+nfInstanceId, nil)
+		request, err = http.NewRequest(http.MethodGet, url+"/"+nfInstanceId, nil)
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -1310,7 +1310,7 @@ func TestHandleNFDeregister(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1330,7 +1330,7 @@ func TestHandleNFDeregister(t *testing.T) {
 	assert.Equal(t, nfStatus, response.NFStatus)
 	// http request NFDeregister
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+	request, err = http.NewRequest(http.MethodDelete, url+"/"+nfInstanceId, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1377,7 +1377,7 @@ func BenchmarkHandleNFDeregister(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -1397,7 +1397,7 @@ func BenchmarkHandleNFDeregister(b *testing.B) {
 		assert.Equal(b, nfStatus, response.NFStatus)
 		// http request NFDeregister
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+		request, err = http.NewRequest(http.MethodDelete, url+"/"+nfInstanceId, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -1446,7 +1446,7 @@ func BenchmarkHandleNFDeregisterParallel(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -1466,7 +1466,7 @@ func BenchmarkHandleNFDeregisterParallel(b *testing.B) {
 			assert.Equal(b, nfStatus, response.NFStatus)
 			// http request NFDeregister
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+			request, err = http.NewRequest(http.MethodDelete, url+"/"+nfInstanceId, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -1522,7 +1522,7 @@ func FuzzHandleNFDeregister(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -1542,7 +1542,7 @@ func FuzzHandleNFDeregister(f *testing.F) {
 		assert.Equal(t, nfStatus, response.NFStatus)
 		// http request NFDeregister
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+		request, err = http.NewRequest(http.MethodDelete, url+"/"+nfInstanceId, nil)
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -1575,7 +1575,7 @@ func TestHandleNFDeregister2(t *testing.T) {
 	nfInstanceId := uuid.New().String()
 	// http request NFDeregister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+	request, err := http.NewRequest(http.MethodDelete, url+"/"+nfInstanceId, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1614,7 +1614,7 @@ func BenchmarkHandleNFDeregister2(b *testing.B) {
 		nfInstanceId := uuid.New().String()
 		// http request NFDeregister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+		request, err := http.NewRequest(http.MethodDelete, url+"/"+nfInstanceId, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -1655,7 +1655,7 @@ func BenchmarkHandleNFDeregisterParallel2(b *testing.B) {
 			nfInstanceId := uuid.New().String()
 			// http request NFDeregister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("DELETE", url+"/"+nfInstanceId, nil)
+			request, err := http.NewRequest(http.MethodDelete, url+"/"+nfInstanceId, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -1708,7 +1708,7 @@ func TestHandleNFDeregister3(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1729,7 +1729,7 @@ func TestHandleNFDeregister3(t *testing.T) {
 	// http request NFDeregister
 	nfInstanceIdNew := uuid.New().String()
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("DELETE", url+"/"+nfInstanceIdNew, nil)
+	request, err = http.NewRequest(http.MethodDelete, url+"/"+nfInstanceIdNew, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1777,7 +1777,7 @@ func BenchmarkHandleNFDeregister3(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -1798,7 +1798,7 @@ func BenchmarkHandleNFDeregister3(b *testing.B) {
 		// http request NFDeregister
 		nfInstanceIdNew := uuid.New().String()
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("DELETE", url+"/"+nfInstanceIdNew, nil)
+		request, err = http.NewRequest(http.MethodDelete, url+"/"+nfInstanceIdNew, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -1848,7 +1848,7 @@ func BenchmarkHandleNFDeregisterParallel3(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -1869,7 +1869,7 @@ func BenchmarkHandleNFDeregisterParallel3(b *testing.B) {
 			// http request NFDeregister
 			nfInstanceIdNew := uuid.New().String()
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("DELETE", url+"/"+nfInstanceIdNew, nil)
+			request, err = http.NewRequest(http.MethodDelete, url+"/"+nfInstanceIdNew, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -1912,7 +1912,7 @@ func TestHandleNFRegisterSharedData(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -1967,7 +1967,7 @@ func BenchmarkHandleNFRegisterSharedData(b *testing.B) {
 			b.Errorf("Error marshalling shared data: %v", err)
 		}
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -2023,7 +2023,7 @@ func BenchmarkHandleNFRegisterSharedDataParallel(b *testing.B) {
 				b.Errorf("Error marshalling shared data: %v", err)
 			}
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -2086,7 +2086,7 @@ func FuzzHandleNFRegisterSharedData(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -2140,7 +2140,7 @@ func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -2177,7 +2177,7 @@ func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
 	}
 	// http request NFProfileCompleteReplacement
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(bodyNew))
+	request, err = http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(bodyNew))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -2231,7 +2231,7 @@ func BenchmarkHandleNFSharedDataCompleteReplacement(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -2268,7 +2268,7 @@ func BenchmarkHandleNFSharedDataCompleteReplacement(b *testing.B) {
 		}
 		// http request NFProfileCompleteReplacement
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(bodyNew))
+		request, err = http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(bodyNew))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -2323,7 +2323,7 @@ func BenchmarkHandleNFSharedDataCompleteReplacementParallel(b *testing.B) {
 				b.Errorf("Error marshalling profile: %v", err)
 			}
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -2359,7 +2359,7 @@ func BenchmarkHandleNFSharedDataCompleteReplacementParallel(b *testing.B) {
 			}
 			// http request NFProfileCompleteReplacement
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(bodyNew))
+			request, err = http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(bodyNew))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -2421,7 +2421,7 @@ func FuzzHandleNFSharedDataCompleteReplacement(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -2458,7 +2458,7 @@ func FuzzHandleNFSharedDataCompleteReplacement(f *testing.F) {
 		}
 		// http request NFProfileCompleteReplacement
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(bodyNew))
+		request, err = http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(bodyNew))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -2509,7 +2509,7 @@ func TestHandleNFSharedDataRetrieve(t *testing.T) {
 		t.Errorf("Error marshalling profile: %v", err)
 	}
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -2530,7 +2530,7 @@ func TestHandleNFSharedDataRetrieve(t *testing.T) {
 	assert.Equal(t, nfStatus, response.SharedProfileData.NFStatus)
 	// http request NFProfileRetrieve
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("GET", url+"/"+sharedDataId, nil)
+	request, err = http.NewRequest(http.MethodGet, url+"/"+sharedDataId, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -2583,7 +2583,7 @@ func BenchmarkHandleNFSharedDataRetrieve(b *testing.B) {
 			b.Errorf("Error marshalling profile: %v", err)
 		}
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -2604,7 +2604,7 @@ func BenchmarkHandleNFSharedDataRetrieve(b *testing.B) {
 		assert.Equal(b, nfStatus, response.SharedProfileData.NFStatus)
 		// http request NFProfileRetrieve
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("GET", url+"/"+sharedDataId, nil)
+		request, err = http.NewRequest(http.MethodGet, url+"/"+sharedDataId, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -2659,7 +2659,7 @@ func BenchmarkHandleNFSharedDataRetrieveParallel(b *testing.B) {
 				b.Errorf("Error marshalling profile: %v", err)
 			}
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -2680,7 +2680,7 @@ func BenchmarkHandleNFSharedDataRetrieveParallel(b *testing.B) {
 			assert.Equal(b, nfStatus, response.SharedProfileData.NFStatus)
 			// http request NFProfileRetrieve
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("GET", url+"/"+sharedDataId, nil)
+			request, err = http.NewRequest(http.MethodGet, url+"/"+sharedDataId, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -2741,7 +2741,7 @@ func FuzzHandleNFSharedDataRetrieve(f *testing.F) {
 			}
 		}()
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -2762,7 +2762,7 @@ func FuzzHandleNFSharedDataRetrieve(f *testing.F) {
 		assert.Equal(t, nfStatus, response.SharedProfileData.NFStatus)
 		// http request NFProfileRetrieve
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("GET", url+"/"+sharedDataId, nil)
+		request, err = http.NewRequest(http.MethodGet, url+"/"+sharedDataId, nil)
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -2808,7 +2808,7 @@ func TestHandleNFListRetrieve(t *testing.T) {
 		t.Errorf("Error marshalling profile: %v", err)
 	}
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -2828,7 +2828,7 @@ func TestHandleNFListRetrieve(t *testing.T) {
 	assert.Equal(t, nfStatus, response.NFStatus)
 	// http request NFListRetrieve
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("GET", url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
+	request, err = http.NewRequest(http.MethodGet, url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -2874,7 +2874,7 @@ func BenchmarkHandleNFListRetrieve(b *testing.B) {
 			b.Errorf("Error marshalling profile: %v", err)
 		}
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -2894,7 +2894,7 @@ func BenchmarkHandleNFListRetrieve(b *testing.B) {
 		assert.Equal(b, nfStatus, response.NFStatus)
 		// http request NFListRetrieve
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("GET", url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
+		request, err = http.NewRequest(http.MethodGet, url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -2942,7 +2942,7 @@ func BenchmarkHandleNFListRetrieveParallel(b *testing.B) {
 				b.Errorf("Error marshalling profile: %v", err)
 			}
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -2962,7 +2962,7 @@ func BenchmarkHandleNFListRetrieveParallel(b *testing.B) {
 			assert.Equal(b, nfStatus, response.NFStatus)
 			// http request NFListRetrieve
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("GET", url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
+			request, err = http.NewRequest(http.MethodGet, url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -3017,7 +3017,7 @@ func FuzzHandleNFListRetrieve(f *testing.F) {
 			}
 		}()
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+nfInstanceId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -3037,7 +3037,7 @@ func FuzzHandleNFListRetrieve(f *testing.F) {
 		assert.Equal(t, nfStatus, response.NFStatus)
 		// http request NFListRetrieve
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("GET", url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
+		request, err = http.NewRequest(http.MethodGet, url+"?nf-type=SMF&limit=1&page-number=1&page-size=1", nil)
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -3097,7 +3097,7 @@ func TestHandleNFDeregisterSharedData(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -3118,7 +3118,7 @@ func TestHandleNFDeregisterSharedData(t *testing.T) {
 	assert.Equal(t, nfStatus, response.SharedProfileData.NFStatus)
 	// http request NFDeregister
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+	request, err = http.NewRequest(http.MethodDelete, url+"/"+sharedDataId, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -3170,7 +3170,7 @@ func BenchmarkHandleNFDeregisterSharedData(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -3191,7 +3191,7 @@ func BenchmarkHandleNFDeregisterSharedData(b *testing.B) {
 		assert.Equal(b, nfStatus, response.SharedProfileData.NFStatus)
 		// http request NFDeregister
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+		request, err = http.NewRequest(http.MethodDelete, url+"/"+sharedDataId, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -3245,7 +3245,7 @@ func BenchmarkHandleNFDeregisterSharedDataParallel(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -3266,7 +3266,7 @@ func BenchmarkHandleNFDeregisterSharedDataParallel(b *testing.B) {
 			assert.Equal(b, nfStatus, response.SharedProfileData.NFStatus)
 			// http request NFDeregister
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+			request, err = http.NewRequest(http.MethodDelete, url+"/"+sharedDataId, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -3327,7 +3327,7 @@ func FuzzHandleNFDeregisterSharedData(f *testing.F) {
 		}()
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -3348,7 +3348,7 @@ func FuzzHandleNFDeregisterSharedData(f *testing.F) {
 		assert.Equal(t, nfStatus, response.SharedProfileData.NFStatus)
 		// http request NFDeregister
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+		request, err = http.NewRequest(http.MethodDelete, url+"/"+sharedDataId, nil)
 		if err != nil {
 			t.Errorf("Error creating request: %v", err)
 		}
@@ -3381,7 +3381,7 @@ func TestHandleNFDeregisterSharedData2(t *testing.T) {
 	sharedDataId := uuid.New().String()
 	// http request NFDeregisterSharedData
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+	request, err := http.NewRequest(http.MethodDelete, url+"/"+sharedDataId, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -3416,7 +3416,7 @@ func BenchmarkHandleNFDeregisterSharedData2(b *testing.B) {
 		sharedDataId := uuid.New().String()
 		// http request NFDeregisterSharedData
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+		request, err := http.NewRequest(http.MethodDelete, url+"/"+sharedDataId, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -3453,7 +3453,7 @@ func BenchmarkHandleNFDeregisterSharedDataParallel2(b *testing.B) {
 			sharedDataId := uuid.New().String()
 			// http request NFDeregisterSharedData
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("DELETE", url+"/"+sharedDataId, nil)
+			request, err := http.NewRequest(http.MethodDelete, url+"/"+sharedDataId, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -3506,7 +3506,7 @@ func TestHandleNFDeregisterSharedData3(t *testing.T) {
 	}
 	// http request NFRegister
 	w := httptest.NewRecorder()
-	request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -3528,7 +3528,7 @@ func TestHandleNFDeregisterSharedData3(t *testing.T) {
 	// http request NFDeregister
 	sharedDataIdNew := uuid.New().String()
 	w = httptest.NewRecorder()
-	request, err = http.NewRequest("DELETE", url+"/"+sharedDataIdNew, nil)
+	request, err = http.NewRequest(http.MethodDelete, url+"/"+sharedDataIdNew, nil)
 	if err != nil {
 		t.Errorf("Error creating request: %v", err)
 	}
@@ -3581,7 +3581,7 @@ func BenchmarkHandleNFDeregisterSharedData3(b *testing.B) {
 		}
 		// http request NFRegister
 		w := httptest.NewRecorder()
-		request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+		request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -3603,7 +3603,7 @@ func BenchmarkHandleNFDeregisterSharedData3(b *testing.B) {
 		// http request NFDeregister
 		sharedDataIdNew := uuid.New().String()
 		w = httptest.NewRecorder()
-		request, err = http.NewRequest("DELETE", url+"/"+sharedDataIdNew, nil)
+		request, err = http.NewRequest(http.MethodDelete, url+"/"+sharedDataIdNew, nil)
 		if err != nil {
 			b.Errorf("Error creating request: %v", err)
 		}
@@ -3658,7 +3658,7 @@ func BenchmarkHandleNFDeregisterSharedDataParallel3(b *testing.B) {
 			}
 			// http request NFRegister
 			w := httptest.NewRecorder()
-			request, err := http.NewRequest("PUT", url+"/"+sharedDataId, bytes.NewReader(body))
+			request, err := http.NewRequest(http.MethodPut, url+"/"+sharedDataId, bytes.NewReader(body))
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
@@ -3680,7 +3680,7 @@ func BenchmarkHandleNFDeregisterSharedDataParallel3(b *testing.B) {
 			// http request NFDeregister
 			sharedDataIdNew := uuid.New().String()
 			w = httptest.NewRecorder()
-			request, err = http.NewRequest("DELETE", url+"/"+sharedDataIdNew, nil)
+			request, err = http.NewRequest(http.MethodDelete, url+"/"+sharedDataIdNew, nil)
 			if err != nil {
 				b.Errorf("Error creating request: %v", err)
 			}
