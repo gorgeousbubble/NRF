@@ -11,6 +11,7 @@ import (
 	. "nrf/data"
 	. "nrf/logs"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -64,35 +65,6 @@ func (nrf *NRF) Init() (err error) {
 func (nrf *NRF) Start() {
 	// create default Gin Engine instance
 	router := gin.Default()
-	// enable SBI TLS layer
-	var tlsConfig *tls.Config
-	tlsSettings := NRFConfigure.SBITLSSettings.TLSType
-	if tlsSettings != "non-tls" {
-		tlsConfig = &tls.Config{
-			MinVersion: tls.VersionTLS13,
-			CurvePreferences: []tls.CurveID{
-				tls.X25519,
-				tls.CurveP256,
-			},
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			},
-		}
-		if tlsSettings == "mutual-tls" {
-			// read CA certificate
-			caCert, err := os.ReadFile("cert/ca.crt")
-			if err != nil {
-				log.Fatal(err)
-			}
-			// create CA certificate pool
-			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(caCert)
-			// specific CA certificate pool
-			tlsConfig.ClientCAs = caCertPool
-			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
-		}
-	}
 	// middleware handle functions
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -120,11 +92,61 @@ func (nrf *NRF) Start() {
 		nfManagement.GET("shared-data/:sharedDataId", HandleNFSharedDataRetrieve)
 		nfManagement.DELETE("shared-data/:sharedDataId", HandleNFDeregisterSharedData)
 	}
-	// start NRF services
-	if tlsSettings == "non-tls" {
+	// enable SBI TLS layer
+	var tlsConfig *tls.Config
+	tlsSettings := NRFConfigure.SBITLSSettings
+	if tlsSettings.TLSType != "non-tls" {
+		tlsConfig = &tls.Config{
+			MinVersion: tls.VersionTLS13,
+			CurvePreferences: []tls.CurveID{
+				tls.X25519,
+				tls.CurveP256,
+			},
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			},
+		}
+		if tlsSettings.TLSType == "mutual-tls" {
+			// get service configure
+			caFile := tlsSettings.CAFile
+			// read CA certificate
+			caCert, err := os.ReadFile(caFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			// create CA certificate pool
+			caCertPool := x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCert)
+			// specific CA certificate pool
+			tlsConfig.ClientCAs = caCertPool
+			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		}
+		// get service configure
+		port := NRFConfigure.SBIPort
+		certFile := tlsSettings.CertFile
+		keyFile := tlsSettings.KeyFile
+		// start https service
+		server := &http.Server{
+			Addr:      ":" + strconv.Itoa(port),
+			Handler:   router,
+			TLSConfig: tlsConfig,
+		}
+		// listen and serve on https port
+		fmt.Println("The NRF start https server on", server.Addr)
+		L.Info("The NRF start https server on", server.Addr)
+		err := server.ListenAndServeTLS(certFile, keyFile)
+		if err != nil {
+			fmt.Println("The NRF start https server failed:", err.Error())
+			L.Error("The NRF start https server failed:", err.Error())
+			os.Exit(1)
+		}
+	} else {
+		// get service configure
+		port := NRFConfigure.SBIPort
 		// start http service
 		server := &http.Server{
-			Addr:    ":8080",
+			Addr:    ":" + strconv.Itoa(port),
 			Handler: router,
 		}
 		// listen and serve on http port
@@ -134,22 +156,6 @@ func (nrf *NRF) Start() {
 		if err != nil {
 			fmt.Println("The NRF start http server failed:", err.Error())
 			L.Error("The NRF start http server failed:", err.Error())
-			os.Exit(1)
-		}
-	} else {
-		// start https service
-		server := &http.Server{
-			Addr:      ":8443",
-			Handler:   router,
-			TLSConfig: tlsConfig,
-		}
-		// listen and serve on https port
-		fmt.Println("The NRF start https server on", server.Addr)
-		L.Info("The NRF start https server on", server.Addr)
-		err := server.ListenAndServeTLS("cert/nrf.pem", "cert/nrf.key")
-		if err != nil {
-			fmt.Println("The NRF start https server failed:", err.Error())
-			L.Error("The NRF start https server failed:", err.Error())
 			os.Exit(1)
 		}
 	}
