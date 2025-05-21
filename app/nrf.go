@@ -15,8 +15,6 @@ import (
 	"sync"
 )
 
-var NRFService *NRF
-
 type NRF struct {
 	instances    map[string][]NFInstance
 	repositories map[string][]SharedRepository
@@ -84,13 +82,13 @@ func (nrf *NRF) Start() {
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{
-		nfManagement.GET("nf-instances", HandleNFListRetrieve)
-		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
-		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
-		nfManagement.DELETE("nf-instances/:nfInstanceID", HandleNFDeregister)
-		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFSharedDataCompleteReplacement)
-		nfManagement.GET("shared-data/:sharedDataId", HandleNFSharedDataRetrieve)
-		nfManagement.DELETE("shared-data/:sharedDataId", HandleNFDeregisterSharedData)
+		nfManagement.GET("nf-instances", nrf.HandleNFListRetrieve)
+		nfManagement.PUT("nf-instances/:nfInstanceID", nrf.HandleNFRegisterOrNFProfileCompleteReplacement)
+		nfManagement.GET("nf-instances/:nfInstanceID", nrf.HandleNFProfileRetrieve)
+		nfManagement.DELETE("nf-instances/:nfInstanceID", nrf.HandleNFDeregister)
+		nfManagement.PUT("shared-data/:sharedDataId", nrf.HandleNFRegisterOrNFSharedDataCompleteReplacement)
+		nfManagement.GET("shared-data/:sharedDataId", nrf.HandleNFSharedDataRetrieve)
+		nfManagement.DELETE("shared-data/:sharedDataId", nrf.HandleNFDeregisterSharedData)
 	}
 	// enable SBI TLS layer
 	var tlsConfig *tls.Config

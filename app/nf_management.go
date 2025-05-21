@@ -22,15 +22,15 @@ type NFListRetrieveRequest struct {
 	PageSize   int    `form:"page-size" binding:"omitempty,min=1"`
 }
 
-func HandleNFRegisterOrNFProfileCompleteReplacement(context *gin.Context) {
+func (nrf *NRF) HandleNFRegisterOrNFProfileCompleteReplacement(context *gin.Context) {
 	// extract nfInstanceId from request uri
 	nfInstanceId := strings.ToLower(context.Param("nfInstanceID"))
 	fmt.Println("nfInstanceId:", nfInstanceId)
 	// found nfInstanceId in database
 	exists := func() bool {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
-		for _, instances := range NRFService.instances {
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
+		for _, instances := range nrf.instances {
 			for _, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
 					return true
@@ -41,14 +41,14 @@ func HandleNFRegisterOrNFProfileCompleteReplacement(context *gin.Context) {
 	}()
 	if !exists {
 		// NFRegister
-		HandleNFRegister(context)
+		nrf.HandleNFRegister(context)
 	} else {
 		// NFUpdate (Profile Complete Replacement)
-		HandleNFProfileCompleteReplacement(context)
+		nrf.HandleNFProfileCompleteReplacement(context)
 	}
 }
 
-func HandleNFRegister(context *gin.Context) {
+func (nrf *NRF) HandleNFRegister(context *gin.Context) {
 	var request NFProfile
 	// record context in logs
 	L.Info("NFRegister request:", context.Request)
@@ -104,9 +104,9 @@ func HandleNFRegister(context *gin.Context) {
 	}
 	// store instance in NRF Service database
 	func() {
-		NRFService.mutex.Lock()
-		defer NRFService.mutex.Unlock()
-		NRFService.instances[response.NFType] = append(NRFService.instances[response.NFType], instance)
+		nrf.mutex.Lock()
+		defer nrf.mutex.Unlock()
+		nrf.instances[response.NFType] = append(nrf.instances[response.NFType], instance)
 	}()
 	// return success response
 	context.Header("Content-Type", "application/json")
@@ -115,7 +115,7 @@ func HandleNFRegister(context *gin.Context) {
 	return
 }
 
-func HandleNFProfileCompleteReplacement(context *gin.Context) {
+func (nrf *NRF) HandleNFProfileCompleteReplacement(context *gin.Context) {
 	var request NFProfile
 	L.Info("NFProfileCompleteReplacement request:", context.Request)
 	// check request body bind json
@@ -170,9 +170,9 @@ func HandleNFProfileCompleteReplacement(context *gin.Context) {
 	}
 	// store instance in NRF Service database
 	err = func(instance *NFInstance) (err error) {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
-		for _, instances := range NRFService.instances {
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
+		for _, instances := range nrf.instances {
 			for k, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
 					instances[k], err = *instance, nil
@@ -199,7 +199,7 @@ func HandleNFProfileCompleteReplacement(context *gin.Context) {
 	return
 }
 
-func HandleNFProfileRetrieve(context *gin.Context) {
+func (nrf *NRF) HandleNFProfileRetrieve(context *gin.Context) {
 	var request NFProfileRetrieveRequest
 	var requestFeatureFilter bool
 	// record context in logs
@@ -222,9 +222,9 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	// found instance in NRF Service database
 	var response NFInstance
 	exists := func(instance *NFInstance) bool {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
-		for _, instances := range NRFService.instances {
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
+		for _, instances := range nrf.instances {
 			for _, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
 					*instance = v
@@ -268,7 +268,7 @@ func HandleNFProfileRetrieve(context *gin.Context) {
 	return
 }
 
-func HandleNFDeregister(context *gin.Context) {
+func (nrf *NRF) HandleNFDeregister(context *gin.Context) {
 	// record context in logs
 	L.Info("NFDeregister request:", context.Request)
 	// extract nfInstanceId from request uri
@@ -276,18 +276,18 @@ func HandleNFDeregister(context *gin.Context) {
 	fmt.Println("nfInstanceId:", nfInstanceId)
 	// search and delete instance from database
 	exists := func(nfInstanceId string) bool {
-		NRFService.mutex.Lock()
-		defer NRFService.mutex.Unlock()
+		nrf.mutex.Lock()
+		defer nrf.mutex.Unlock()
 		// search the specific instance in database
 		exists := false
-		for k, v := range NRFService.instances {
+		for k, v := range nrf.instances {
 			for i, j := range v {
 				if j.NFInstanceId == nfInstanceId {
 					// delete NFInstance from database
-					NRFService.instances[k] = append(NRFService.instances[k][:i], NRFService.instances[k][i+1:]...)
+					nrf.instances[k] = append(nrf.instances[k][:i], nrf.instances[k][i+1:]...)
 					// remove NFType slice when all NFInstance deleted
-					if len(NRFService.instances[k]) == 0 {
-						delete(NRFService.instances, k)
+					if len(nrf.instances[k]) == 0 {
+						delete(nrf.instances, k)
 					}
 					exists = true
 					break
@@ -311,7 +311,7 @@ func HandleNFDeregister(context *gin.Context) {
 	context.Status(http.StatusNoContent)
 }
 
-func HandleNFListRetrieve(context *gin.Context) {
+func (nrf *NRF) HandleNFListRetrieve(context *gin.Context) {
 	var request NFListRetrieveRequest
 	// record context in logs
 	L.Info("NFListRetrieve request:", context.Request)
@@ -332,12 +332,12 @@ func HandleNFListRetrieve(context *gin.Context) {
 	handleNFListRetrieveQuery(&request)
 	// get instances in NRF Service database
 	response, err := func(request NFListRetrieveRequest) (uriList UriList, err error) {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
 		// get instances according to nfType
 		if request.NFType != "" {
 			// search specific nfType
-			for k, v := range NRFService.instances {
+			for k, v := range nrf.instances {
 				if k == request.NFType {
 					// start and end points in slices
 					start := (request.PageNumber - 1) * request.PageSize
@@ -379,7 +379,7 @@ func HandleNFListRetrieve(context *gin.Context) {
 	return
 }
 
-func HandleNFRegisterOrNFSharedDataCompleteReplacement(context *gin.Context) {
+func (nrf *NRF) HandleNFRegisterOrNFSharedDataCompleteReplacement(context *gin.Context) {
 	// check allowedSharedData feature enable
 	if !NRFConfigure.AllowedSharedData {
 		context.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "SharedData feature not allowed"})
@@ -391,9 +391,9 @@ func HandleNFRegisterOrNFSharedDataCompleteReplacement(context *gin.Context) {
 	fmt.Println("sharedDataId:", sharedDataId)
 	// found sharedDataId in database
 	exists := func() bool {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
-		for _, repositories := range NRFService.repositories {
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
+		for _, repositories := range nrf.repositories {
 			for _, v := range repositories {
 				if v.SharedDataId == sharedDataId {
 					return true
@@ -404,14 +404,14 @@ func HandleNFRegisterOrNFSharedDataCompleteReplacement(context *gin.Context) {
 	}()
 	if !exists {
 		// NFRegister (SharedData)
-		HandleNFRegisterSharedData(context)
+		nrf.HandleNFRegisterSharedData(context)
 	} else {
 		// NFUpdate (SharedData Complete Replacement)
-		HandleNFSharedDataCompleteReplacement(context)
+		nrf.HandleNFSharedDataCompleteReplacement(context)
 	}
 }
 
-func HandleNFRegisterSharedData(context *gin.Context) {
+func (nrf *NRF) HandleNFRegisterSharedData(context *gin.Context) {
 	var request SharedData
 	// record context in logs
 	L.Info("NFRegister (SharedData) request:", context.Request)
@@ -465,9 +465,9 @@ func HandleNFRegisterSharedData(context *gin.Context) {
 	}
 	// store repository in NRF Service database
 	func() {
-		NRFService.mutex.Lock()
-		defer NRFService.mutex.Unlock()
-		NRFService.repositories[response.SharedDataId] = append(NRFService.repositories[response.SharedDataId], repository)
+		nrf.mutex.Lock()
+		defer nrf.mutex.Unlock()
+		nrf.repositories[response.SharedDataId] = append(nrf.repositories[response.SharedDataId], repository)
 	}()
 	// return success response
 	context.Header("Content-Type", "application/json")
@@ -476,7 +476,7 @@ func HandleNFRegisterSharedData(context *gin.Context) {
 	return
 }
 
-func HandleNFSharedDataCompleteReplacement(context *gin.Context) {
+func (nrf *NRF) HandleNFSharedDataCompleteReplacement(context *gin.Context) {
 	var request SharedData
 	L.Info("NFSharedDataCompleteReplacement request:", context.Request)
 	// check request body bind json
@@ -529,9 +529,9 @@ func HandleNFSharedDataCompleteReplacement(context *gin.Context) {
 	}
 	// store repository in SharedRepositories database
 	err = func(repo *SharedRepository) (err error) {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
-		for _, repositories := range NRFService.repositories {
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
+		for _, repositories := range nrf.repositories {
 			for k, v := range repositories {
 				if v.SharedDataId == sharedDataId {
 					repositories[k], err = *repo, nil
@@ -558,7 +558,7 @@ func HandleNFSharedDataCompleteReplacement(context *gin.Context) {
 	return
 }
 
-func HandleNFSharedDataRetrieve(context *gin.Context) {
+func (nrf *NRF) HandleNFSharedDataRetrieve(context *gin.Context) {
 	var request NFProfileRetrieveRequest
 	var requestFeatureFilter bool
 	// record context in logs
@@ -581,9 +581,9 @@ func HandleNFSharedDataRetrieve(context *gin.Context) {
 	// store instance in NRF Service database
 	var response SharedRepository
 	exists := func(repo *SharedRepository) bool {
-		NRFService.mutex.RLock()
-		defer NRFService.mutex.RUnlock()
-		for _, repositories := range NRFService.repositories {
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
+		for _, repositories := range nrf.repositories {
 			for _, v := range repositories {
 				if v.SharedDataId == sharedDataId {
 					*repo = v
@@ -628,7 +628,7 @@ func HandleNFSharedDataRetrieve(context *gin.Context) {
 	return
 }
 
-func HandleNFDeregisterSharedData(context *gin.Context) {
+func (nrf *NRF) HandleNFDeregisterSharedData(context *gin.Context) {
 	// record context in logs
 	L.Info("NFDeregister (SharedData) request:", context.Request)
 	// extract sharedDataId from request uri
@@ -636,18 +636,18 @@ func HandleNFDeregisterSharedData(context *gin.Context) {
 	fmt.Println("sharedDataId:", sharedDataId)
 	// search and delete instance from database
 	exists := func(sharedDataId string) bool {
-		NRFService.mutex.Lock()
-		defer NRFService.mutex.Unlock()
+		nrf.mutex.Lock()
+		defer nrf.mutex.Unlock()
 		// search the specific instance in database
 		exists := false
-		for k, v := range NRFService.repositories {
+		for k, v := range nrf.repositories {
 			for i, j := range v {
 				if j.SharedDataId == sharedDataId {
 					// delete SharedData from database
-					NRFService.repositories[k] = append(NRFService.repositories[k][:i], NRFService.repositories[k][i+1:]...)
+					nrf.repositories[k] = append(nrf.repositories[k][:i], nrf.repositories[k][i+1:]...)
 					// remove SharedDataId slice when all SharedData deleted
-					if len(NRFService.repositories[k]) == 0 {
-						delete(NRFService.repositories, k)
+					if len(nrf.repositories[k]) == 0 {
+						delete(nrf.repositories, k)
 					}
 					exists = true
 					break

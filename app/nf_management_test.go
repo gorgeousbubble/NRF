@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +16,12 @@ import (
 )
 
 func setupTestRouter() *gin.Engine {
+	// initialize NRF Service
+	nrf := New()
+	err := nrf.Init()
+	if err != nil {
+		panic(err)
+	}
 	// initialize Gin framework
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -30,13 +35,13 @@ func setupTestRouter() *gin.Engine {
 	// API route groups
 	nfManagement := router.Group("/nnrf-nfm/v1")
 	{
-		nfManagement.GET("nf-instances", HandleNFListRetrieve)
-		nfManagement.PUT("nf-instances/:nfInstanceID", HandleNFRegisterOrNFProfileCompleteReplacement)
-		nfManagement.GET("nf-instances/:nfInstanceID", HandleNFProfileRetrieve)
-		nfManagement.DELETE("nf-instances/:nfInstanceID", HandleNFDeregister)
-		nfManagement.PUT("shared-data/:sharedDataId", HandleNFRegisterOrNFSharedDataCompleteReplacement)
-		nfManagement.GET("shared-data/:sharedDataId", HandleNFSharedDataRetrieve)
-		nfManagement.DELETE("shared-data/:sharedDataId", HandleNFDeregisterSharedData)
+		nfManagement.GET("nf-instances", nrf.HandleNFListRetrieve)
+		nfManagement.PUT("nf-instances/:nfInstanceID", nrf.HandleNFRegisterOrNFProfileCompleteReplacement)
+		nfManagement.GET("nf-instances/:nfInstanceID", nrf.HandleNFProfileRetrieve)
+		nfManagement.DELETE("nf-instances/:nfInstanceID", nrf.HandleNFDeregister)
+		nfManagement.PUT("shared-data/:sharedDataId", nrf.HandleNFRegisterOrNFSharedDataCompleteReplacement)
+		nfManagement.GET("shared-data/:sharedDataId", nrf.HandleNFSharedDataRetrieve)
+		nfManagement.DELETE("shared-data/:sharedDataId", nrf.HandleNFDeregisterSharedData)
 	}
 	return router
 }
@@ -47,12 +52,6 @@ func startTestServer() (*httptest.Server, *gin.Engine) {
 }
 
 func TestHandleNFRegister(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -94,12 +93,6 @@ func TestHandleNFRegister(t *testing.T) {
 }
 
 func BenchmarkHandleNFRegister(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -146,12 +139,6 @@ func BenchmarkHandleNFRegister(b *testing.B) {
 }
 
 func BenchmarkHandleNFRegisterParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -200,12 +187,6 @@ func BenchmarkHandleNFRegisterParallel(b *testing.B) {
 }
 
 func FuzzHandleNFRegister(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -246,49 +227,7 @@ func FuzzHandleNFRegister(f *testing.F) {
 	})
 }
 
-func ExampleHandleNFRegister() {
-	// initialize NRF Service
-	NRFService = New()
-	_ = NRFService.Init()
-	// start http test service
-	server, router := startTestServer()
-	defer server.Close()
-	// construct network function request content
-	url := server.URL + "/nnrf-nfm/v1/nf-instances"
-	nfInstanceId := uuid.New().String()
-	nfType := "AMF"
-	nfStatus := "REGISTERED"
-	// assemble network function http request
-	profile := NFProfile{
-		NFInstanceId: nfInstanceId,
-		NFType:       nfType,
-		NFStatus:     nfStatus,
-	}
-	body, _ := json.Marshal(profile)
-	// http request NFRegister
-	w := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPut, url+"/"+nfInstanceId, bytes.NewReader(body))
-	request.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w, request)
-	var response NFProfile
-	_ = json.Unmarshal(w.Body.Bytes(), &response)
-	// print http response
-	fmt.Println("response status code:", w.Code)
-	fmt.Println("response content-type:", w.Header().Get("Content-Type"))
-	fmt.Println("response location:", w.Header().Get("Location"))
-	fmt.Println("response body:", string(w.Body.Bytes()))
-	fmt.Println("response nfInstanceId:", response.NFInstanceId)
-	fmt.Println("response nfType:", response.NFType)
-	fmt.Println("response nfStatus:", response.NFStatus)
-}
-
 func TestHandleNFRegisterWithUpperNFInstanceID(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -330,12 +269,6 @@ func TestHandleNFRegisterWithUpperNFInstanceID(t *testing.T) {
 }
 
 func BenchmarkHandleNFRegisterWithUpperNFInstanceID(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -381,12 +314,6 @@ func BenchmarkHandleNFRegisterWithUpperNFInstanceID(b *testing.B) {
 }
 
 func BenchmarkHandleNFRegisterWithUpperNFInstanceIDParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -434,12 +361,6 @@ func BenchmarkHandleNFRegisterWithUpperNFInstanceIDParallel(b *testing.B) {
 }
 
 func FuzzHandleNFRegisterWithUpperNFInstanceID(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -491,12 +412,6 @@ func FuzzHandleNFRegisterWithUpperNFInstanceID(f *testing.F) {
 }
 
 func TestHandleNFRegisterWithoutNFType(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -534,12 +449,6 @@ func TestHandleNFRegisterWithoutNFType(t *testing.T) {
 }
 
 func BenchmarkHandleNFRegisterWithoutNFType(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -581,12 +490,6 @@ func BenchmarkHandleNFRegisterWithoutNFType(b *testing.B) {
 }
 
 func BenchmarkHandleNFRegisterWithoutNFTypeParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -630,12 +533,6 @@ func BenchmarkHandleNFRegisterWithoutNFTypeParallel(b *testing.B) {
 }
 
 func FuzzHandleNFRegisterWithoutNFType(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -683,12 +580,6 @@ func FuzzHandleNFRegisterWithoutNFType(f *testing.F) {
 }
 
 func TestHandleNFProfileCompleteReplacement(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -760,12 +651,6 @@ func TestHandleNFProfileCompleteReplacement(t *testing.T) {
 }
 
 func BenchmarkHandleNFProfileCompleteReplacement(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -841,12 +726,6 @@ func BenchmarkHandleNFProfileCompleteReplacement(b *testing.B) {
 }
 
 func BenchmarkHandleNFProfileCompleteReplacementParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -924,12 +803,6 @@ func BenchmarkHandleNFProfileCompleteReplacementParallel(b *testing.B) {
 }
 
 func FuzzHandleNFProfileCompleteReplacement(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1011,12 +884,6 @@ func FuzzHandleNFProfileCompleteReplacement(f *testing.F) {
 }
 
 func TestHandleNFProfileRetrieve(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1075,12 +942,6 @@ func TestHandleNFProfileRetrieve(t *testing.T) {
 }
 
 func BenchmarkHandleNFProfileRetrieve(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1143,12 +1004,6 @@ func BenchmarkHandleNFProfileRetrieve(b *testing.B) {
 }
 
 func BenchmarkHandleNFProfileRetrieveParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1201,12 +1056,6 @@ func BenchmarkHandleNFProfileRetrieveParallel(b *testing.B) {
 }
 
 func FuzzHandleNFProfileRetrieve(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1284,12 +1133,6 @@ func TestHandleNFDeregister(t *testing.T) {
 	// 3. send NFDeregister request to NRF by using the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1349,12 +1192,6 @@ func BenchmarkHandleNFDeregister(b *testing.B) {
 	// 3. send NFDeregister request to NRF by using the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1417,12 +1254,6 @@ func BenchmarkHandleNFDeregisterParallel(b *testing.B) {
 	// 3. send NFDeregister request to NRF by using the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1487,12 +1318,6 @@ func FuzzHandleNFDeregister(f *testing.F) {
 	// 3. send NFDeregister request to NRF by using the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1561,12 +1386,6 @@ func TestHandleNFDeregister2(t *testing.T) {
 	// 2. send NFDeregister request to NRF
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1598,12 +1417,6 @@ func BenchmarkHandleNFDeregister2(b *testing.B) {
 	// 2. send NFDeregister request to NRF
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1638,12 +1451,6 @@ func BenchmarkHandleNFDeregisterParallel2(b *testing.B) {
 	// 2. send NFDeregister request to NRF
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1682,12 +1489,6 @@ func TestHandleNFDeregister3(t *testing.T) {
 	//    which not existed
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1749,12 +1550,6 @@ func BenchmarkHandleNFDeregister3(b *testing.B) {
 	//    which not existed
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1819,12 +1614,6 @@ func BenchmarkHandleNFDeregisterParallel3(b *testing.B) {
 	//    which not existed
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1881,12 +1670,6 @@ func BenchmarkHandleNFDeregisterParallel3(b *testing.B) {
 }
 
 func TestHandleNFRegisterSharedData(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1934,12 +1717,6 @@ func TestHandleNFRegisterSharedData(t *testing.T) {
 }
 
 func BenchmarkHandleNFRegisterSharedData(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -1989,12 +1766,6 @@ func BenchmarkHandleNFRegisterSharedData(b *testing.B) {
 }
 
 func BenchmarkHandleNFRegisterSharedDataParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2046,12 +1817,6 @@ func BenchmarkHandleNFRegisterSharedDataParallel(b *testing.B) {
 }
 
 func FuzzHandleNFRegisterSharedData(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2109,12 +1874,6 @@ func FuzzHandleNFRegisterSharedData(f *testing.F) {
 }
 
 func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2197,12 +1956,6 @@ func TestHandleNFSharedDataCompleteReplacement(t *testing.T) {
 }
 
 func BenchmarkHandleNFSharedDataCompleteReplacement(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2289,12 +2042,6 @@ func BenchmarkHandleNFSharedDataCompleteReplacement(b *testing.B) {
 }
 
 func BenchmarkHandleNFSharedDataCompleteReplacementParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2381,12 +2128,6 @@ func BenchmarkHandleNFSharedDataCompleteReplacementParallel(b *testing.B) {
 }
 
 func FuzzHandleNFSharedDataCompleteReplacement(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2479,12 +2220,6 @@ func FuzzHandleNFSharedDataCompleteReplacement(f *testing.F) {
 }
 
 func TestHandleNFSharedDataRetrieve(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2550,12 +2285,6 @@ func TestHandleNFSharedDataRetrieve(t *testing.T) {
 }
 
 func BenchmarkHandleNFSharedDataRetrieve(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2625,12 +2354,6 @@ func BenchmarkHandleNFSharedDataRetrieve(b *testing.B) {
 }
 
 func BenchmarkHandleNFSharedDataRetrieveParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2702,12 +2425,6 @@ func BenchmarkHandleNFSharedDataRetrieveParallel(b *testing.B) {
 }
 
 func FuzzHandleNFSharedDataRetrieve(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2783,12 +2500,6 @@ func FuzzHandleNFSharedDataRetrieve(f *testing.F) {
 }
 
 func TestHandleNFListRetrieve(t *testing.T) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2847,12 +2558,6 @@ func TestHandleNFListRetrieve(t *testing.T) {
 }
 
 func BenchmarkHandleNFListRetrieve(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2914,12 +2619,6 @@ func BenchmarkHandleNFListRetrieve(b *testing.B) {
 }
 
 func BenchmarkHandleNFListRetrieveParallel(b *testing.B) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -2983,12 +2682,6 @@ func BenchmarkHandleNFListRetrieveParallel(b *testing.B) {
 }
 
 func FuzzHandleNFListRetrieve(f *testing.F) {
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3066,12 +2759,6 @@ func TestHandleNFDeregisterSharedData(t *testing.T) {
 	// 3. send NFDeregisterSharedData request to NRF with the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3137,12 +2824,6 @@ func BenchmarkHandleNFDeregisterSharedData(b *testing.B) {
 	// 3. send NFDeregisterSharedData request to NRF with the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3211,12 +2892,6 @@ func BenchmarkHandleNFDeregisterSharedDataParallel(b *testing.B) {
 	// 3. send NFDeregisterSharedData request to NRF with the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3287,12 +2962,6 @@ func FuzzHandleNFDeregisterSharedData(f *testing.F) {
 	// 3. send NFDeregisterSharedData request to NRF with the same uuid
 	// 4. receive 204 No Content from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		f.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3367,12 +3036,6 @@ func TestHandleNFDeregisterSharedData2(t *testing.T) {
 	// 2. send NFDeregisterSharedData request to NRF
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3399,12 +3062,6 @@ func BenchmarkHandleNFDeregisterSharedData2(b *testing.B) {
 	// 2. send NFDeregisterSharedData request to NRF
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3435,12 +3092,6 @@ func BenchmarkHandleNFDeregisterSharedDataParallel2(b *testing.B) {
 	// 2. send NFDeregisterSharedData request to NRF
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3475,12 +3126,6 @@ func TestHandleNFDeregisterSharedData3(t *testing.T) {
 	//    SharedData which not existed
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		t.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3548,12 +3193,6 @@ func BenchmarkHandleNFDeregisterSharedData3(b *testing.B) {
 	//    SharedData which not existed
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()
@@ -3624,12 +3263,6 @@ func BenchmarkHandleNFDeregisterSharedDataParallel3(b *testing.B) {
 	//    SharedData which not existed
 	// 3. receive 404 Not Found from NRF
 	-------------------------------------------------------------------------*/
-	// initialize NRF Service
-	NRFService = New()
-	err := NRFService.Init()
-	if err != nil {
-		b.Error(err)
-	}
 	// start http test service
 	server, router := startTestServer()
 	defer server.Close()

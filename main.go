@@ -21,12 +21,12 @@ func init() {
 
 func main() {
 	fmt.Println("The 5G System Network Function Repository Services.")
-	NRFService = New()
-	err := NRFService.Init()
+	nrf := New()
+	err := nrf.Init()
 	if err != nil {
 		fmt.Println("The NRF initialization failed:", err.Error())
 		L.Error("The NRF initialization failed:", err.Error())
 		os.Exit(1)
 	}
-	NRFService.Start()
+	nrf.Start()
 }
