@@ -222,8 +222,8 @@ func (nrf *NRF) HandleNFProfileRetrieve(context *gin.Context) {
 	// found instance in NRF Service database
 	var response NFInstance
 	exists := func(instance *NFInstance) bool {
-		nrf.mutex.RLock()
-		defer nrf.mutex.RUnlock()
+		nrf.mutex.Lock()
+		defer nrf.mutex.Unlock()
 		for _, instances := range nrf.instances {
 			for _, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
