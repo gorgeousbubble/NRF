@@ -170,8 +170,8 @@ func (nrf *NRF) HandleNFProfileCompleteReplacement(context *gin.Context) {
 	}
 	// store instance in NRF Service database
 	err = func(instance *NFInstance) (err error) {
-		nrf.mutex.RLock()
-		defer nrf.mutex.RUnlock()
+		nrf.mutex.Lock()
+		defer nrf.mutex.Unlock()
 		for _, instances := range nrf.instances {
 			for k, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
@@ -222,8 +222,8 @@ func (nrf *NRF) HandleNFProfileRetrieve(context *gin.Context) {
 	// found instance in NRF Service database
 	var response NFInstance
 	exists := func(instance *NFInstance) bool {
-		nrf.mutex.Lock()
-		defer nrf.mutex.Unlock()
+		nrf.mutex.RLock()
+		defer nrf.mutex.RUnlock()
 		for _, instances := range nrf.instances {
 			for _, v := range instances {
 				if v.NFInstanceId == nfInstanceId {
@@ -529,8 +529,8 @@ func (nrf *NRF) HandleNFSharedDataCompleteReplacement(context *gin.Context) {
 	}
 	// store repository in SharedRepositories database
 	err = func(repo *SharedRepository) (err error) {
-		nrf.mutex.RLock()
-		defer nrf.mutex.RUnlock()
+		nrf.mutex.Lock()
+		defer nrf.mutex.Unlock()
 		for _, repositories := range nrf.repositories {
 			for k, v := range repositories {
 				if v.SharedDataId == sharedDataId {
