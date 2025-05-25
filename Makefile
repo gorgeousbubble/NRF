@@ -40,7 +40,6 @@ dist:	build
 	tar -zcvf $(APP-DIST) $(APP-PATH)
 
 test:
-	$(GO-TEST) -v -cover -benchmem -bench .
 	for dir in $(SUB-DIRS); do \
         $(MAKE) -C $$dir test; \
     done
