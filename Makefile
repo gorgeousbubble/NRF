@@ -23,6 +23,9 @@ APP-NAME	= nrf
 APP-DIST = nrf.tar.gz
 APP-PATH = ./bin/$(APP-NAME)
 
+# Sub Directories
+SUB-DIRS = app
+
 # Build
 all: test build
 
@@ -38,6 +41,9 @@ dist:	build
 
 test:
 	$(GO-TEST) -v -cover -benchmem -bench .
+	for dir in $(SUB-DIRS); do \
+        $(MAKE) -C $$dir test; \
+    done
 
 clean:
 	$(GO-CLEAN)
