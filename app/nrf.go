@@ -158,11 +158,3 @@ func (nrf *NRF) Start() {
 		}
 	}
 }
-
-func (nrf *NRF) Stop() {
-
-}
-
-func (nrf *NRF) Status() {
-
-}
