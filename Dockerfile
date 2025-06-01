@@ -1,4 +1,11 @@
 FROM ubuntu:latest
-LABEL authors="Alope"
+LABEL authors="Yuxing He"
 
-ENTRYPOINT ["top", "-b"]
+WORKDIR $GOPATH/src/nrf
+COPY . .
+
+RUN go get -v -t -d ./...
+RUN go install -v ./...
+
+EXPOSE 8080
+ENTRYPOINT ["$GOPATH/bin/nrf"]
